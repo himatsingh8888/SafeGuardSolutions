@@ -6,7 +6,49 @@ import safeguardLogo from "../assets/safeguard-logo.png";
 import securitySystemsIcon from "../assets/security-systems-icon.png";
 import securityCamerasIcon from "../assets/security-cameras-icon.png";
 import accessControlIcon from "../assets/access-control-icon.png";
-import { reviews, googleReviewsLink } from "../mock/reviews.js";
+
+const reviews = [
+  {
+    id: 1,
+    name: "Sarah Johnson",
+    location: "Vancouver, BC",
+    date: "March 2026",
+    rating: 5,
+    shortReview: "Excellent service and professional installation. Our new security system works perfectly!"
+  },
+  {
+    id: 2,
+    name: "Mike Chen",
+    location: "Burnaby, BC",
+    date: "February 2026",
+    rating: 5,
+    shortReview: "Very responsive team and high-quality equipment. Highly recommend for home security."
+  },
+  {
+    id: 3,
+    name: "Lisa Thompson",
+    location: "Surrey, BC",
+    date: "January 2026",
+    rating: 5,
+    shortReview: "Great experience from start to finish. The cameras provide excellent coverage."
+  },
+  {
+    id: 4,
+    name: "David Rodriguez",
+    location: "Richmond, BC",
+    date: "December 2025",
+    rating: 5,
+    shortReview: "Professional installation and excellent customer service. Our business feels much safer."
+  },
+  {
+    id: 5,
+    name: "Emma Wilson",
+    location: "Langley, BC",
+    date: "November 2025",
+    rating: 5,
+    shortReview: "Top-notch security system with easy-to-use interface. Very satisfied with the results."
+  }
+];
 
 export default function Home() {
   return (
