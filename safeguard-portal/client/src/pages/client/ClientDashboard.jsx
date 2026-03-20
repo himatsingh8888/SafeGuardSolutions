@@ -5,7 +5,7 @@ export default function ClientDashboard() {
   const [clients, setClients] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/clients')
+    fetch('http://localhost:5000/api/clients')
       .then((response) => response.json())
       .then((data) => setClients(data))
       .catch((error) => console.error('Error fetching clients:', error));
