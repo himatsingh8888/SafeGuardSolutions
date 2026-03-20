@@ -20,6 +20,22 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
+
+
+
+
+
+CREATE TABLE public.users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT users_role_check CHECK (role IN ('admin', 'technician', 'client'))
+);
+CREATE UNIQUE INDEX one_admin ON public.users ((role)) WHERE role = 'admin';
 --
 -- Name: accesscontrolsystem; Type: TABLE; Schema: public; Owner: postgres
 --

@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { apiRouter } from "./routes/api.js";
+import { authRouter } from "./routes/auth.js"
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
   res.send("Safeguard backend running");
 });
 
+app.use('/api/auth', authRouter)
 app.use("/api", apiRouter)
 
 
