@@ -14,11 +14,14 @@ export default function Login() {
 
         console.log(username, password)
 
+        
+
   }
 
   return (
       <div className="login-page" style={{ display: "flex", gap: 12 }}>
         <form className= "login-form" onSubmit={handleLogin} >
+          <button className="back-btn" onClick={() => navigate('/')}>  &#8592; Back</button>
           <h1>Sign In</h1>
           <p>Access your security dashboard</p>
           <div className="input-box">
