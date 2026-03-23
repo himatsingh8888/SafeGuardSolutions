@@ -44,3 +44,25 @@ button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
+
+.Logout-section{
+  display: flex;
+  align-items: center;
+
+  
+}
+
+.Logout-section > button{
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border-radius: 10px;
+  border: 2px solid lightgrey;
+  height:35px;
+  margin-left:10px;
+}
+
+.Logout-section > p{
+  font-weight: 500;
+  color: grey;
+}
