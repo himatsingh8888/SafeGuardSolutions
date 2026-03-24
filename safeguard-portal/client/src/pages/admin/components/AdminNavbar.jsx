@@ -1,8 +1,18 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import '../../../index.css'
 
 export default function AdminNavbar() {
+
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    localStorage.removeItem('token')
+    navigate('/login')
+  }
+
+
 
   return (
     <div
@@ -18,7 +28,7 @@ export default function AdminNavbar() {
       <div
         className='Logout-section'>
         <p>Admin</p>
-        <button>Logout</button>
+        <button onClick={handleLogout}>Logout</button>
       </div>
     </div>
   );
