@@ -14,6 +14,7 @@ import AdminInventory from "./pages/admin/AdminInventory.jsx";
 import AdminReviews from "./pages/admin/AdminReviews.jsx";
 import AdminService from "./pages/admin/AdminService.jsx";
 import AdminPayments from "./pages/admin/AdminPayments.jsx";
+import ProtectedRoutes from "./ProtectedRoutes.jsx";
 export default function App() {
   return (
     <BrowserRouter>
@@ -24,7 +25,11 @@ export default function App() {
         <Route path="/client/dashboard" element={<ClientDashboard />} />
         <Route path="/tech/dashboard" element={<TechDashboard />} />
 
-        <Route element={<Layout />}>
+        <Route element={
+          <ProtectedRoutes>
+            <Layout />
+          </ProtectedRoutes>
+        }>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="/admin/employees" element={<AdminEmployees />} />
