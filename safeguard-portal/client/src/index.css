@@ -40,29 +40,59 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-.Logout-section{
+.Logout-section {
   display: flex;
   align-items: center;
 
-  
+
 }
 
-.Logout-section > button{
+.Logout-section>button {
   display: flex;
   align-items: center;
   background-color: white;
   border-radius: 10px;
-  border: 2px solid lightgrey;
-  height:35px;
-  margin-left:10px;
+  border: 1px solid rgb(189, 187, 187);
+  height: 35px;
+  margin-left: 10px;
+  font-weight: 600;
+  transition: 0.5s;
 }
 
-.Logout-section > p{
+.Logout-section>button:hover {
+  background-color: #f5f4f0;
+
+}
+
+.Logout-section>p {
   font-weight: 500;
-  color: grey;
+  color: rgb(70, 70, 70);
+}
+
+.Admin-Dashboard {
+  background-color: #dcd8cc;
+  height: 100vh;
+}
+
+.admin-sub-navbar {
+  display: flex;
+  background-color: #f5f4f0;
+  padding-left: 20px;
+  gap: 50px;
+  align-items: center;
+  height: 50px;
+
+}
+
+.active-link {
+  font-Weight: bold;
+  text-Decoration: underline;
+  color: #161616;
+
 }
