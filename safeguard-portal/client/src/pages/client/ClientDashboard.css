@@ -1,0 +1,122 @@
+.client-dashboard-page {
+  background-color: #e8e2d4;
+  min-height: calc(100vh - 65px);
+  padding: 24px;
+}
+
+.client-dashboard-note {
+  margin-top: 4px;
+  color: #666;
+}
+
+.client-section {
+  margin-top: 24px;
+}
+
+.client-card {
+  max-width: 640px;
+  background-color: #faf9f6;
+  border: 1px solid #b8ae98;
+  padding: 16px;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.profile-form input {
+  border: 1px solid #b8ae98;
+  background: #faf9f6;
+  padding: 10px;
+  font-family: inherit;
+}
+
+.profile-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.progress-track {
+  margin-top: 10px;
+  background: #ddd6c7;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #1a1a1a;
+}
+
+.progress-text {
+  margin-top: 8px;
+}
+
+.history-table {
+  width: 100%;
+  max-width: 900px;
+  border-collapse: collapse;
+  background: #faf9f6;
+  border: 1px solid #b8ae98;
+}
+
+.history-table th,
+.history-table td {
+  border: 1px solid #b8ae98;
+  padding: 8px;
+  text-align: left;
+}
+
+.history-table th {
+  background: #f0eadb;
+}
+
+.message-form {
+  max-width: 640px;
+}
+
+.message-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #b8ae98;
+  background: #faf9f6;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.message-button {
+  margin-top: 10px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 0;
+}
+
+.secondary-button {
+  margin-top: 10px;
+  background: #f0eadb;
+  color: #111;
+  border: 1px solid #b8ae98;
+  border-radius: 0;
+}
+
+.message-success {
+  margin-top: 10px;
+  color: #1f6f35;
+}
+
+.message-error {
+  margin-top: 4px;
+  color: #9f1f1f;
+}
