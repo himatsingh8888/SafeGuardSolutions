@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import { apiRouter } from "./routes/api.js";
-import { authRouter } from "./routes/auth.js"
+import { authRouter } from "./routes/auth.js";
+import { adminRouter } from "./routes/admin.js"
 
 dotenv.config();
 
@@ -17,7 +18,9 @@ app.get("/", (req, res) => {
 });
 
 app.use('/api/auth', authRouter)
+app.use('/api/admin', adminRouter)
 app.use("/api", apiRouter)
+
 
 
 
