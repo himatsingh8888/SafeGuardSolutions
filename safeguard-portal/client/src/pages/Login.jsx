@@ -26,6 +26,10 @@ export default function Login() {
       if (res.ok) {
         //also save the token sent from the backend
         localStorage.setItem('token', data.token)
+        const cid = data.clientId ?? data.clientID ?? data.ClientId
+        if (cid !== undefined && cid !== null && cid !== '') {
+          localStorage.setItem('clientId', String(cid))
+        }
         if (data.role == 'admin') {
           navigate('/admin')
         }
