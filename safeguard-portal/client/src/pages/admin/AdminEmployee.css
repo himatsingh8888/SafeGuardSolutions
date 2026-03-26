@@ -1,0 +1,106 @@
+.Admin-Dashboard {
+    background-color: #dcd8cc;
+    height: 100vh;
+}
+
+.Employees {
+    border-radius: 10px;
+
+    background-color: white;
+    margin-left: 40px;
+    margin-right: 40px;
+}
+
+.Employee-Info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    height: 60px;
+    padding-left: 40px;
+    padding-right: 100px;
+    background-color: #fafafa;
+    color: #888888;
+    border: 0.5px solid rgba(0, 0, 0, 0.07);
+    border-radius: 10px 10px 0 0;
+}
+
+.employee {
+    display: flex;
+    justify-content: space-between;
+    border: 0.5px solid rgba(0, 0, 0, 0.07);
+}
+
+.buttons {
+    display: flex;
+    align-items: center;
+    margin-right: 40px;
+
+}
+
+.buttons>button {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: #111;
+    width: auto;
+    height: 40px;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+
+.buttons>button:hover {
+    background-color: #dcd8cc;
+}
+
+
+.employee>h4 {
+    margin-left: 40px;
+}
+
+.Employee-pg-header {
+    display: flex;
+    justify-content: space-between;
+    padding-right: 40px;
+    padding-left: 40px;
+
+}
+
+.header-title>h2 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.header-title>p {
+    font-size: 1rem;
+    color: #666;
+    margin-top: 4px;
+}
+
+.Employee-pg-header>button {
+    height: 40px;
+    background-color: #dcd8cc;
+    border: 0.5px solid grey;
+    transition: 0.3s;
+}
+
+.Employee-pg-header>button:hover {
+    background-color: #fafaf8;
+}
+
+.skill-tag {
+    background: #F1EFE8;
+    color: #5F5E5A;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+
+}
+
+.salary {
+    font-weight: 400;
+}
