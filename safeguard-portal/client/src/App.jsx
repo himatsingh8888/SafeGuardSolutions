@@ -31,11 +31,13 @@ export default function App() {
           </ProtectedRoutes>
         }>
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="/admin/employees" element={<AdminEmployees />} />
           <Route path="/admin/installations" element={<AdminInstallations />} />
           <Route path="/admin/inventory" element={<AdminInventory />} />
           <Route path="/admin/Reviews" element={<AdminReviews />} />
+          <Route path="/admin/reviews" element={<AdminReviews />} />
           <Route path="/admin/payments" element={<AdminPayments />} />
           <Route path="/admin/service" element={<AdminService />} />
         </Route>
