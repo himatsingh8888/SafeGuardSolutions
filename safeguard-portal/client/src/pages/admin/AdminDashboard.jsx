@@ -1,4 +1,5 @@
 import '../../index.css'
+import './AdminDashboard.css'
 import { useState, useEffect } from 'react'
 
 export default function AdminDashboard() {
@@ -71,182 +72,77 @@ export default function AdminDashboard() {
   }, []);
 
   // Calculate statistics from real data
-  const upcomingInstallations = installations.filter(inst => inst.status === 'Scheduled').length;
-  const pendingPayments = payments.filter(payment => payment.status === 'Pending').length;
+  const upcomingInstallations = installations.filter(
+    i => i.status === 'Scheduled'
+  ).length;
 
-  // Mock data for financial summary (keeping as mock since not specified in requirements)
+  const completedInstallations = installations.filter(
+    i => i.status === 'Completed'
+  ).length;
+
+  // Compute financial data from payments API
+  const totalRevenue = payments
+    .filter(p => p.status === 'Paid')
+    .reduce((sum, p) => sum + Number(p.totalamount), 0);
+
+  const pendingCount = payments.filter(p => p.status === 'Pending').length;
+  const overdueCount = payments.filter(p => p.status === 'Overdue').length;
+
+  // Financial summary with computed values
   const financialSummary = [
-    { label: 'Revenue This Month', value: '$12,500', color: '#4caf50' },
-    { label: 'Overdue Payments', value: 3, color: '#f44336' },
-    { label: 'Pending Payments', value: 8, color: '#ff9800' }
+    { label: 'Revenue This Month', value: `$${totalRevenue.toLocaleString()}`, color: '#4caf50' },
+    { label: 'Overdue Payments', value: overdueCount, color: '#f44336' },
+    { label: 'Pending Payments', value: pendingCount, color: '#ff9800' }
   ];
 
-  // Mock data for recent activity (keeping as mock since not specified in requirements)
-  const recentInstallations = [
-    { id: 'INST-001', client: 'John Smith', date: 'Mar 24, 2024', status: 'Completed' },
-    { id: 'INST-002', client: 'Acme Corp', date: 'Mar 23, 2024', status: 'In Progress' },
-    { id: 'INST-003', client: 'Jane Doe', date: 'Mar 22, 2024', status: 'Scheduled' }
-  ];
+  // Dynamic recent activity from real data
+  const recentInstallations = [...installations]
+    .sort((a, b) => new Date(b.scheduleddate) - new Date(a.scheduleddate))
+    .slice(0, 3);
 
-  const recentPayments = [
-    { id: 'PAY-001', client: 'Tech Solutions', amount: '$1,250.00', date: 'Mar 24, 2024' },
-    { id: 'PAY-002', client: 'City Hospital', amount: '$2,800.00', date: 'Mar 23, 2024' }
-  ];
+  const recentPayments = [...payments]
+    .sort((a, b) => new Date(b.createdate) - new Date(a.createdate))
+    .slice(0, 3);
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      backgroundColor: '#e9e4db',
-      fontFamily: 'system-ui, Avenir, Helvetica, Arial, sans-serif'
-    }}>
-      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h2 style={{ marginBottom: '24px', color: '#333' }}>Admin Dashboard</h2>
+    <div className="admin-dashboard">
+      <div className="dashboard-container">
+        <h2 className="dashboard-title">Admin Dashboard</h2>
         
         {/* Overview Section */}
-        <section style={{ marginBottom: '32px' }}>
-          <h3 style={{ marginBottom: '16px', color: '#555', fontSize: '1.25rem' }}>Overview</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: '16px'
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
-              <span style={{
-                fontSize: '0.875rem',
-                color: '#666',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Total Clients
-              </span>
-              <span style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                color: '#333'
-              }}>
-                {loading ? 'Loading...' : clients.length}
-              </span>
+        <section className="dashboard-section">
+          <h3 className="section-title">Overview</h3>
+          <div className="overview-grid">
+            <div className="stat-card">
+              <span className="stat-label">Total Clients</span>
+              <span className="stat-value">{loading ? 'Loading...' : clients.length}</span>
             </div>
 
-            <div style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
-              <span style={{
-                fontSize: '0.875rem',
-                color: '#666',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Total Employees
-              </span>
-              <span style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                color: '#333'
-              }}>
-                {loading ? 'Loading...' : employees.length}
-              </span>
+            <div className="stat-card">
+              <span className="stat-label">Total Employees</span>
+              <span className="stat-value">{loading ? 'Loading...' : employees.length}</span>
             </div>
 
-            <div style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
-              <span style={{
-                fontSize: '0.875rem',
-                color: '#666',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Upcoming Installations
-              </span>
-              <span style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                color: '#333'
-              }}>
-                {loading ? 'Loading...' : upcomingInstallations}
-              </span>
+            <div className="stat-card">
+              <span className="stat-label">Upcoming Installations</span>
+              <span className="stat-value">{loading ? 'Loading...' : upcomingInstallations}</span>
             </div>
 
-            <div style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
-              <span style={{
-                fontSize: '0.875rem',
-                color: '#666',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Pending Payments
-              </span>
-              <span style={{
-                fontSize: '2rem',
-                fontWeight: '700',
-                color: '#333'
-              }}>
-                {loading ? 'Loading...' : pendingPayments}
-              </span>
+            <div className="stat-card">
+              <span className="stat-label">Completed Installations</span>
+              <span className="stat-value">{loading ? 'Loading...' : completedInstallations}</span>
             </div>
           </div>
         </section>
 
         {/* Financial Summary Section */}
-        <section style={{ marginBottom: '32px' }}>
-          <h3 style={{ marginBottom: '16px', color: '#555', fontSize: '1.25rem' }}>Financial Summary</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: '16px'
-          }}>
+        <section className="dashboard-section">
+          <h3 className="section-title">Financial Summary</h3>
+          <div className="financial-grid">
             {financialSummary.map((item, index) => (
-              <div key={index} style={{
-                backgroundColor: 'white',
-                padding: '20px',
-                borderRadius: '12px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px'
-              }}>
-                <span style={{
-                  fontSize: '0.875rem',
-                  color: '#666',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
-                  {item.label}
-                </span>
-                <span style={{
-                  fontSize: '2rem',
-                  fontWeight: '700',
-                  color: item.color
-                }}>
+              <div key={index} className="financial-card">
+                <span className="financial-label">{item.label}</span>
+                <span className={`financial-value ${item.label.toLowerCase().replace(/\s+/g, '-')}-color`}>
                   {item.value}
                 </span>
               </div>
@@ -255,34 +151,12 @@ export default function AdminDashboard() {
         </section>
 
         {/* Filter Bar Section */}
-        <section style={{ marginBottom: '32px' }}>
-          <h3 style={{ marginBottom: '16px', color: '#555', fontSize: '1.25rem' }}>Filters</h3>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            display: 'flex',
-            gap: '16px',
-            alignItems: 'center'
-          }}>
-            <div style={{ flex: 1 }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '0.875rem',
-                color: '#555'
-              }}>
-                Month
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '8px',
-                border: '1px solid #ddd',
-                fontSize: '1rem',
-                backgroundColor: 'white'
-              }}>
+        <section className="dashboard-section">
+          <h3 className="section-title">Filters</h3>
+          <div className="filter-container">
+            <div className="filter-group">
+              <label className="filter-label">Month</label>
+              <select className="filter-select">
                 <option value="current">Current Month</option>
                 <option value="january">January</option>
                 <option value="february">February</option>
@@ -298,23 +172,9 @@ export default function AdminDashboard() {
                 <option value="december">December</option>
               </select>
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '0.875rem',
-                color: '#555'
-              }}>
-                Payment Status
-              </label>
-              <select style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '8px',
-                border: '1px solid #ddd',
-                fontSize: '1rem',
-                backgroundColor: 'white'
-              }}>
+            <div className="filter-group">
+              <label className="filter-label">Payment Status</label>
+              <select className="filter-select">
                 <option value="all">All</option>
                 <option value="paid">Paid</option>
                 <option value="pending">Pending</option>
@@ -325,58 +185,25 @@ export default function AdminDashboard() {
         </section>
 
         {/* Recent Activity Section */}
-        <section>
-          <h3 style={{ marginBottom: '16px', color: '#555', fontSize: '1.25rem' }}>Recent Activity</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px'
-          }}>
+        <section className="dashboard-section">
+          <h3 className="section-title">Recent Activity</h3>
+          <div className="activity-grid">
             {/* Recent Installations */}
-            <div style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <h4 style={{
-                margin: '0 0 16px 0',
-                fontSize: '1rem',
-                color: '#333',
-                borderBottom: '2px solid #f0f0f0',
-                paddingBottom: '8px'
-              }}>
-                Recent Installations
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="activity-card">
+              <h4 className="activity-header">Recent Installations</h4>
+              <div className="activity-list">
                 {recentInstallations.map((install, index) => (
-                  <div key={index} style={{
-                    padding: '12px',
-                    border: '1px solid #f0f0f0',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
+                  <div key={index} className="activity-item">
                     <div>
-                      <div style={{ fontWeight: '600', color: '#333' }}>{install.client}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#666' }}>{install.id}</div>
+                      <div className="activity-client">{install.client || 'Unknown Client'}</div>
+                      <div className="activity-id">{install.installationid || 'N/A'}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        padding: '4px 8px',
-                        borderRadius: '16px',
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        backgroundColor: install.status === 'Completed' ? '#e8f5e9' : 
-                                       install.status === 'In Progress' ? '#fff3e0' : '#f3e5f5',
-                        color: install.status === 'Completed' ? '#2e7d32' : 
-                              install.status === 'In Progress' ? '#ef6c00' : '#7b1fa2'
-                      }}>
+                      <div className={`activity-status status-${install.status.toLowerCase().replace(' ', '-')}`}>
                         {install.status}
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '4px' }}>
-                        {install.date}
+                      <div className="activity-date">
+                        {install.scheduleddate ? new Date(install.scheduleddate).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -385,45 +212,21 @@ export default function AdminDashboard() {
             </div>
 
             {/* Recent Payments */}
-            <div style={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <h4 style={{
-                margin: '0 0 16px 0',
-                fontSize: '1rem',
-                color: '#333',
-                borderBottom: '2px solid #f0f0f0',
-                paddingBottom: '8px'
-              }}>
-                Recent Payments
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="activity-card">
+              <h4 className="activity-header">Recent Payments</h4>
+              <div className="activity-list">
                 {recentPayments.map((payment, index) => (
-                  <div key={index} style={{
-                    padding: '12px',
-                    border: '1px solid #f0f0f0',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
+                  <div key={index} className="activity-item">
                     <div>
-                      <div style={{ fontWeight: '600', color: '#333' }}>{payment.client}</div>
-                      <div style={{ fontSize: '0.875rem', color: '#666' }}>{payment.id}</div>
+                      <div className="activity-client">{payment.client || 'Unknown Client'}</div>
+                      <div className="activity-id">{payment.paymentid || 'N/A'}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ 
-                        fontSize: '1.1rem',
-                        fontWeight: '700',
-                        color: '#2e7d32'
-                      }}>
-                        {payment.amount}
+                      <div className="activity-value">
+                        ${Number(payment.totalamount || 0).toLocaleString()}
                       </div>
-                      <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '4px' }}>
-                        {payment.date}
+                      <div className="activity-date">
+                        {payment.createdate ? new Date(payment.createdate).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                   </div>
@@ -432,7 +235,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </section>
-
       </div>
     </div>
   );
