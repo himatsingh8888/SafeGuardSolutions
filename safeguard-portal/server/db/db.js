@@ -6,6 +6,8 @@ dotenv.config()
 const { Pool } = pkg
 
 const pool = new Pool({
+  family: 4,
+  ssl: { rejectUnauthorized: false },
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   user: process.env.DB_USER,
