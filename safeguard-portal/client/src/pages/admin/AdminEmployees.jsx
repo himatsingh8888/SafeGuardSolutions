@@ -5,6 +5,7 @@ export default function AdminEmployees() {
     const [employees, setEmployees] = React.useState([])
     const [showModal, setShowModal] = React.useState(false);
     const [selectedSkills, setSelectedSkills] = React.useState([])
+    const [refresh, setRefresh] = React.useState(0)
 
     const skills = ['Camera Installation', 'Alarm Systems', 'Access Control', 'Network Setup']
 
@@ -24,7 +25,7 @@ export default function AdminEmployees() {
             <h2 className='salary'>${employee.wage}/hr</h2>
             <div className='buttons'>
                 <button>Edit</button>
-                <button>Delete</button>
+                <button onClick={() => { deleteEmployee(employee.employeeid) }}>Delete</button>
             </div>
         </div>
     ))
@@ -56,22 +57,9 @@ export default function AdminEmployees() {
         }
 
         fetchEmployees()
-    }, [])
+    }, [refresh])
 
-    /*async function addEmployee(){
-        try {
-            const res = await fetch('http://localhost:5000/api/admin/addEmployee',{
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-            })
-            
-        } catch (error) {
-            
-        }
-    }*/
+
 
     async function handleFormSubmit(e) {
         e.preventDefault();
@@ -90,13 +78,15 @@ export default function AdminEmployees() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ firstName, lastName, email, phone, wage })
+                body: JSON.stringify({ firstName, lastName, email, phone, wage, skills: selectedSkills })
             })
 
             const data = await res.json()
 
             if (res.ok) {
                 console.log('Employee succefully added')
+                setRefresh(prev => prev + 1)
+                setShowModal(false)
             }
             else {
                 console.log(data.message)
@@ -108,6 +98,33 @@ export default function AdminEmployees() {
 
         }
     }
+
+    async function deleteEmployee(employeeid) {
+        try {
+            const res = await fetch('http://localhost:5000/api/admin/deleteEmployee', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ employeeid })
+
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                console.log(data.message)
+                setRefresh(prev => prev + 1)
+
+
+            }
+
+        } catch (error) {
+            console.log(error)
+
+        }
+    }
+
 
     return (
         <div>
