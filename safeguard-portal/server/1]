@@ -1,0 +1,38 @@
+node:internal/modules/esm/resolve:275
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/harmanbhogal/CMPT354-Project/safeguard-portal/controllers/clientController.js' imported from /Users/harmanbhogal/CMPT354-Project/safeguard-portal/server/[eval1]
+    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+    at moduleResolve (node:internal/modules/esm/resolve:860:10)
+    at defaultResolve (node:internal/modules/esm/resolve:984:11)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:736:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:660:25)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:643:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:279:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:137:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///Users/harmanbhogal/CMPT354-Project/safeguard-portal/controllers/clientController.js'
+}
+
+Node.js v23.9.0
+node:internal/modules/esm/resolve:275
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/harmanbhogal/CMPT354-Project/safeguard-portal/controllers/clientController.js' imported from /Users/harmanbhogal/CMPT354-Project/safeguard-portal/server/[eval1]
+    at finalizeResolution (node:internal/modules/esm/resolve:275:11)
+    at moduleResolve (node:internal/modules/esm/resolve:860:10)
+    at defaultResolve (node:internal/modules/esm/resolve:984:11)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:736:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:660:25)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:643:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:279:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:137:49)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///Users/harmanbhogal/CMPT354-Project/safeguard-portal/controllers/clientController.js'
+}
+
+Node.js v23.9.0

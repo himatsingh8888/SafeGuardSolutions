@@ -1,4 +1,4 @@
-import pool from '../db';
+import pool from '../db/db.js';
 
 // /api/client/:clientID 
 export const getClient = async (req, res) => {
@@ -40,10 +40,10 @@ export const updateClient = async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE client
-       SET fname          = $1
-           lname          = $2 
-           billingaddress = $3
-           email          = $4
+       SET fname          = $1,
+           lname          = $2,
+           billingaddress = $3,
+           email          = $4,
            phone          = $5
        WHERE clientid = $6
        RETURNING clientid, fname, lname, billingaddress, customertype, email, phone`,
