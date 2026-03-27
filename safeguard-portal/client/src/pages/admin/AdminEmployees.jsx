@@ -24,7 +24,7 @@ export default function AdminEmployees() {
             </div>
             <h2 className='salary'>${employee.wage}/hr</h2>
             <div className='buttons'>
-                <button>Edit</button>
+                <button onClick={() => { updateEmployee(employee.employeeid) }}>Edit</button>
                 <button onClick={() => { deleteEmployee(employee.employeeid) }}>Delete</button>
             </div>
         </div>
@@ -103,6 +103,32 @@ export default function AdminEmployees() {
         try {
             const res = await fetch('http://localhost:5000/api/admin/deleteEmployee', {
                 method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ employeeid })
+
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                console.log(data.message)
+                setRefresh(prev => prev + 1)
+
+
+            }
+
+        } catch (error) {
+            console.log(error)
+
+        }
+    }
+
+    async function updateEmployee(employeeid) {
+        try {
+            const res = await fetch('http://localhost:5000/api/admin/updateEmployee', {
+                method: 'UPDATE',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
