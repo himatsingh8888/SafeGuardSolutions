@@ -1,5 +1,4 @@
 import express from 'express'
-const clientRouter = express.Router();
 
 import {
   getClient,
@@ -7,11 +6,16 @@ import {
   getClientInstallations,
   getInstallationDetail,
   getClientPayments,
-}  from '../controllers/clientController.js';
+} from '../controllers/clientController.js';
 
-router.get('/:clientID', getClient);
-router.put('/:clientID', updateClient);
-router.get('/:clientID/installations', getClientInstallations);
-router.get('/:clientID/installations/:installationID', getInstallationDetail);
-router.get('/:clientID/payments', getClientPayments);
+
+
+const clientRouter = express.Router();
+clientRouter.get('/:clientID', getClient);
+clientRouter.put('/:clientID', updateClient);
+clientRouter.get('/:clientID/installations', getClientInstallations);
+clientRouter.get('/:clientID/installations/:installationID', getInstallationDetail);
+clientRouter.get('/:clientID/payments', getClientPayments);
+
+export { clientRouter };
 
