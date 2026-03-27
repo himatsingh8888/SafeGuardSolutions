@@ -18,3 +18,10 @@ export async function getEmployees(req, res) {
         res.status(500).json({ error: 'Failed to fetch employees' })
     }
 }
+
+export async function addEmployee(req, res) {
+    const { firstName, lastName, email, phone, wage } = req.body
+
+    console.log('this is from the server' + firstName)
+    res.status(200).json(firstName)
+}

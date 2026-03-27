@@ -73,6 +73,42 @@ export default function AdminEmployees() {
         }
     }*/
 
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target)
+
+        const firstName = formData.get("firstName")
+        const lastName = formData.get("lastName")
+        const email = formData.get("email")
+        const phone = formData.get("phone")
+        const wage = formData.get("wage")
+
+        try {
+            const res = await fetch('http://localhost:5000/api/admin/addEmployee', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ firstName, lastName, email, phone, wage })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                console.log('Employee succefully added')
+            }
+            else {
+                console.log(data.message)
+            }
+
+
+
+        } catch (error) {
+
+        }
+    }
+
     return (
         <div>
             {showModal &&
@@ -82,7 +118,7 @@ export default function AdminEmployees() {
                             <h1>Add Employee</h1>
                             <button onClick={() => { setShowModal(false) }}>x</button>
                         </div>
-                        <form>
+                        <form onSubmit={handleFormSubmit}>
                             <div className='name-fields'>
                                 <div>
                                     <h3>FIRST NAME</h3>
@@ -119,8 +155,8 @@ export default function AdminEmployees() {
                                 ))}
                             </div>
                             <div className='form-buttons'>
-                                <button>Cancel</button>
-                                <button>Add Employee</button>
+                                <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit">Add Employee</button>
                             </div>
 
                         </form>
