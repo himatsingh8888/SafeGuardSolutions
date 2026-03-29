@@ -1,27 +1,39 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { API_BASE } from "../config/apiBase.js";
 import './Login.css'
 
 export default function Login() {
   const navigate = useNavigate();
+  const [error, setError] = useState("");
 
   async function handleLogin(e) {
     e.preventDefault()
+    setError("")
 
     const formData = new FormData(e.target)
 
     const username = formData.get("username")
     const password = formData.get("password")
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ username, password })
       })
-      console.log(username, password)
 
-      const data = await res.json()
+      let data = {}
+      const text = await res.text()
+      if (text) {
+        try {
+          data = JSON.parse(text)
+        } catch {
+          setError(`Server returned an invalid response. Check that the API is running (${API_BASE}).`)
+          return
+        }
+      }
 
       if (res.ok) {
         //also save the token sent from the backend
@@ -30,36 +42,29 @@ export default function Login() {
         if (cid !== undefined && cid !== null && cid !== '') {
           localStorage.setItem('clientId', String(cid))
         }
-        if (data.role == 'admin') {
+        const role = String(data.role ?? "").trim().toLowerCase()
+        if (role === 'admin') {
           navigate('/admin')
-        }
-        if (data.role == 'technician') {
+        } else if (role === 'technician') {
           navigate('/tech/dashboard')
-        }
-        if (data.role == 'client') {
+        } else if (role === 'client') {
           navigate('/client/dashboard')
+        } else {
+          setError(data.role ? `Unknown role: "${data.role}". Expected admin, technician, or client.` : "Login succeeded but no role was returned.")
         }
-        console.log('succesfully logged in')
-        console.log({ token: data.token, role: data.role })
-
-
       } else {
-        console.log('login error')
-        console.log(data.message)
+        setError(data.message || `Login failed (${res.status})`)
       }
     } catch (err) {
-      console.log(err)
+      console.error(err)
+      setError(`Cannot reach the server at ${API_BASE}. Start the backend with \`npm start\` in safeguard-portal/server (set PORT in server/.env or default 5001).`)
     }
-
-
-
-
   }
 
   return (
     <div className="login-page" style={{ display: "flex", gap: 12 }}>
       <form className="login-form" onSubmit={handleLogin} >
-        <button className="back-btn" onClick={() => navigate('/')}>  &#8592; Back</button>
+        <button type="button" className="back-btn" onClick={() => navigate('/')}>  &#8592; Back</button>
         <h1>Sign In</h1>
         <p>Access your security dashboard</p>
         <div className="input-box">
@@ -71,6 +76,9 @@ export default function Login() {
           <input type="password" name="password" placeholder="Password" />
         </div>
         <button type="submit" className="login-btn">ACCESS DASHBOARD</button>
+        {error && (
+          <p style={{ color: "#b00020", fontSize: 14, marginTop: 12 }}>{error}</p>
+        )}
       </form>
     </div>
 

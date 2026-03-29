@@ -1,5 +1,6 @@
 import './AdminEmployee.css'
 import React from 'react'
+import { API_BASE } from '../../config/apiBase.js'
 
 export default function AdminEmployees() {
     const [employees, setEmployees] = React.useState([])
@@ -41,7 +42,7 @@ export default function AdminEmployees() {
     React.useEffect(() => {
         const fetchEmployees = async () => {
             try {
-                const res = await fetch('http://localhost:5000/api/admin/getEmployees', {
+                const res = await fetch(`${API_BASE}/api/admin/getEmployees`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -72,7 +73,7 @@ export default function AdminEmployees() {
         const wage = formData.get("wage")
 
         try {
-            const res = await fetch('http://localhost:5000/api/admin/addEmployee', {
+            const res = await fetch(`${API_BASE}/api/admin/addEmployee`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -101,7 +102,7 @@ export default function AdminEmployees() {
 
     async function deleteEmployee(employeeid) {
         try {
-            const res = await fetch('http://localhost:5000/api/admin/deleteEmployee', {
+            const res = await fetch(`${API_BASE}/api/admin/deleteEmployee`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,7 +128,7 @@ export default function AdminEmployees() {
 
     async function updateEmployee(employeeid) {
         try {
-            const res = await fetch('http://localhost:5000/api/admin/updateEmployee', {
+            const res = await fetch(`${API_BASE}/api/admin/updateEmployee`, {
                 method: 'UPDATE',
                 headers: {
                     'Content-Type': 'application/json',

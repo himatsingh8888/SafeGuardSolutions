@@ -1,5 +1,4 @@
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:5000";
+import { API_BASE } from "../config/apiBase.js";
 
 function authHeaders() {
   const token = localStorage.getItem("token");
@@ -88,11 +87,20 @@ export function normalizePayment(raw) {
   };
 }
 
+/**
+ * Which client row to load for /client/dashboard.
+ * In dev, `VITE_DEV_CLIENT_ID` in client/.env wins over localStorage so a stale
+ * clientId from an old login (e.g. 1 = seeded "John" data) does not override your .env.
+ */
 export function getStoredClientId() {
+  const devId = import.meta.env.VITE_DEV_CLIENT_ID;
+  if (import.meta.env.DEV && devId !== undefined && devId !== null && String(devId).trim() !== "") {
+    return String(devId).trim();
+  }
   return (
     localStorage.getItem("clientId") ||
     localStorage.getItem("clientID") ||
-    import.meta.env.VITE_DEV_CLIENT_ID ||
+    (devId !== undefined && devId !== null ? String(devId).trim() : "") ||
     ""
   );
 }

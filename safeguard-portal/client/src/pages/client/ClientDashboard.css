@@ -1,137 +1,270 @@
-.client-dashboard-page {
-  background-color: #e8e2d4;
-  min-height: calc(100vh - 65px);
-  padding: 24px;
+/* Client dashboard — matches admin dashboard chrome (AdminDashboard.css) */
+
+.client-dashboard-shell {
+  padding-top: 0;
 }
 
-.client-dashboard-note {
+.client-subtitle {
+  margin: -8px 0 24px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.client-id-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #ddd;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.client-loading {
+  color: #888;
+}
+
+.client-overview-grid .stat-card {
+  min-height: 120px;
+}
+
+.client-stat-compact {
+  font-size: 1.35rem;
+}
+
+.client-overview-grid .activity-status {
+  align-self: flex-start;
   margin-top: 4px;
-  color: #666;
 }
 
-.client-section {
-  margin-top: 24px;
+.client-empty-card {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 720px;
 }
 
-.client-card {
-  max-width: 640px;
-  background-color: #faf9f6;
-  border: 1px solid #b8ae98;
-  padding: 16px;
+.client-empty-text {
+  margin: 0;
+  color: #555;
+  line-height: 1.5;
 }
 
-.profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.client-empty-text code {
+  font-size: 0.9em;
 }
 
-.profile-form label {
+.client-panel-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 960px;
+}
+
+.client-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.client-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 14px;
 }
 
-.profile-form input {
-  border: 1px solid #b8ae98;
-  background: #faf9f6;
-  padding: 10px;
-  font-family: inherit;
+.client-field-full {
+  grid-column: 1 / -1;
 }
 
-.profile-actions {
-  margin-top: 8px;
+.client-field-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #666;
+}
+
+.client-field-value {
+  font-size: 1rem;
+  color: #222;
+  font-weight: 500;
+}
+
+.client-muted {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.client-job-header {
   display: flex;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
-.progress-track {
-  margin-top: 10px;
-  background: #ddd6c7;
-  height: 14px;
-  border-radius: 999px;
-  overflow: hidden;
+.client-job-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #222;
 }
 
-.progress-fill {
-  height: 100%;
-  background: #1a1a1a;
+.client-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: #555;
 }
 
-.progress-text {
-  margin-top: 8px;
+.client-job-meta strong {
+  color: #333;
+  margin-right: 6px;
 }
 
-.history-table {
-  width: 100%;
-  max-width: 900px;
-  border-collapse: collapse;
-  background: #faf9f6;
-  border: 1px solid #b8ae98;
+.client-progress-track {
+  height: 12px;
+  margin-top: 4px;
 }
 
-.history-table th,
-.history-table td {
-  border: 1px solid #b8ae98;
-  padding: 8px;
-  text-align: left;
+.client-progress-label {
+  font-size: 0.875rem;
+  color: #666;
 }
 
-.history-table th {
-  background: #f0eadb;
+.client-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
 }
 
-.message-form {
-  max-width: 640px;
+.client-profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #444;
 }
 
-.message-textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #b8ae98;
-  background: #faf9f6;
-  resize: vertical;
+.client-profile-form input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
   font-family: inherit;
 }
 
-.message-button {
-  margin-top: 10px;
-  background: #111;
-  color: #fff;
+.client-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 0;
+  border-radius: 8px;
+  background: #1a1a1a;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
 }
 
-.secondary-button {
-  margin-top: 10px;
-  background: #f0eadb;
-  color: #111;
-  border: 1px solid #b8ae98;
-  border-radius: 0;
+.client-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.message-success {
-  margin-top: 10px;
-  color: #1f6f35;
+.client-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
 }
 
-.message-error {
-  margin-top: 4px;
-  color: #9f1f1f;
+.client-btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.client-table-wrap {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 960px;
+}
+
+.client-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.client-data-table th {
+  text-align: left;
+  padding: 12px 14px;
+  background: #f7f7f7;
+  color: #555;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #eee;
+}
+
+.client-data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #333;
+  vertical-align: middle;
+}
+
+.client-data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.client-message-form {
+  max-width: none;
+}
+
+.client-textarea {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.status-cancelled {
+  background-color: #ffebee;
+  color: #c62828;
 }
 
 .client-banner {
-  max-width: 900px;
+  max-width: 960px;
   padding: 12px 14px;
-  margin-bottom: 16px;
-  border: 1px solid #b8ae98;
-  background: #faf9f6;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff8f8;
 }
 
 .client-banner.error {
-  border-color: #c49a9a;
-  background: #faf0f0;
+  border-color: #e0b4b4;
+  background: #fff5f5;
 }
 
 .link-button {
@@ -139,18 +272,50 @@
   background: none;
   border: none;
   padding: 0;
-  color: #1a3a6e;
+  color: #1565c0;
   text-decoration: underline;
   cursor: pointer;
   font: inherit;
 }
 
+.message-success {
+  margin-top: 12px;
+  color: #2e7d32;
+  font-size: 0.9rem;
+}
+
+.message-error {
+  margin-top: 8px;
+  color: #c62828;
+  font-size: 0.9rem;
+}
+
 .detail-json {
   margin: 0;
-  padding: 12px;
-  background: #f0eadb;
-  border: 1px solid #b8ae98;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
   font-size: 12px;
   overflow-x: auto;
   max-height: 360px;
+}
+
+@media (max-width: 768px) {
+  .client-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-data-table {
+    font-size: 0.8rem;
+  }
+
+  .client-data-table th,
+  .client-data-table td {
+    padding: 8px 10px;
+  }
 }

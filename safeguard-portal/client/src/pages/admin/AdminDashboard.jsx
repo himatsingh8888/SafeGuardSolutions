@@ -1,6 +1,7 @@
 import '../../index.css'
 import './AdminDashboard.css'
 import { useState, useEffect } from 'react'
+import { API_BASE } from '../../config/apiBase.js'
 
 export default function AdminDashboard() {
   // State for API data
@@ -21,10 +22,10 @@ export default function AdminDashboard() {
         console.log('Starting data fetch...');
 
         // Fetch all endpoints separately to handle individual failures
-        const clientsRes = await fetch('http://localhost:5000/api/clients');
-        const employeesRes = await fetch('http://localhost:5000/api/employees');
-        const installationsRes = await fetch('http://localhost:5000/api/installations');
-        const paymentsRes = await fetch('http://localhost:5000/api/payments');
+        const clientsRes = await fetch(`${API_BASE}/api/clients`);
+        const employeesRes = await fetch(`${API_BASE}/api/employees`);
+        const installationsRes = await fetch(`${API_BASE}/api/installations`);
+        const paymentsRes = await fetch(`${API_BASE}/api/payments`);
 
         console.log('Responses received:', {
           clients: clientsRes,
