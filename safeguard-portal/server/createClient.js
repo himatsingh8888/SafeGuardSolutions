@@ -11,19 +11,19 @@ import pool from "./db/db.js";
 // After running, set VITE_DEV_CLIENT_ID in client/.env to the printed client ID
 // (or add users.clientid + login response later so it’s automatic).
 
-const username = "client_test3";
+const username = "client_test4";
 const password = "yourpasswordhere";
 
 // Login user (users table)
 const userDisplayName = "Test Client";
-const userEmail = "client_test3@safeguard.com";
+const userEmail = "client_test4@safeguard.com";
 
 // Client profile (client table) — shown on Client Dashboard
 const fname = "Test";
 const lname = "ClientUser";
 const billingaddress = "123 Test Street, Vancouver, BC";
 const customertype = "Residential"; // or 'Commercial'
-const clientEmail = "client_test3@safeguard.com";
+const clientEmail = "client_test4@safeguard.com";
 const phone = "6045550100";
 
 const hashedPassword = await bcrypt.hash(password, 10);
