@@ -7,6 +7,8 @@ export default function AdminEmployees() {
     const [showModal, setShowModal] = React.useState(false);
     const [selectedSkills, setSelectedSkills] = React.useState([])
     const [refresh, setRefresh] = React.useState(0)
+    const [modalMode, setModalMode] = React.useState(null)
+    const [selectedEmployee, setSelectedEmployee] = React.useState(null)
 
     const skills = ['Camera Installation', 'Alarm Systems', 'Access Control', 'Network Setup']
 
@@ -25,7 +27,14 @@ export default function AdminEmployees() {
             </div>
             <h2 className='salary'>${employee.wage}/hr</h2>
             <div className='buttons'>
-                <button onClick={() => { updateEmployee(employee.employeeid) }}>Edit</button>
+                <button onClick={() => {
+                    setModalMode('edit');
+                    setShowModal(true);
+                    setSelectedEmployee(employee);
+                    setSelectedSkills(employee.skills || [])
+                }}
+                >Edit</button>
+
                 <button onClick={() => { deleteEmployee(employee.employeeid) }}>Delete</button>
             </div>
         </div>
@@ -71,6 +80,7 @@ export default function AdminEmployees() {
         const email = formData.get("email")
         const phone = formData.get("phone")
         const wage = formData.get("wage")
+
 
         try {
             const res = await fetch(`${API_BASE}/api/admin/addEmployee`, {
@@ -126,15 +136,24 @@ export default function AdminEmployees() {
         }
     }
 
-    async function updateEmployee(employeeid) {
+    async function updateEmployee(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target)
+
+        const firstName = formData.get("firstName")
+        const lastName = formData.get("lastName")
+        const email = formData.get("email")
+        const phone = formData.get("phone")
+        const wage = formData.get("wage")
+        const employeeid = selectedEmployee.employeeid
         try {
             const res = await fetch(`${API_BASE}/api/admin/updateEmployee`, {
-                method: 'UPDATE',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ employeeid })
+                body: JSON.stringify({ firstName, lastName, email, phone, wage, employeeid, skills: selectedSkills })
 
             })
             const data = await res.json()
@@ -142,6 +161,7 @@ export default function AdminEmployees() {
             if (res.ok) {
                 console.log(data.message)
                 setRefresh(prev => prev + 1)
+                setShowModal(false)
 
 
             }
@@ -159,32 +179,31 @@ export default function AdminEmployees() {
                 <div className='overlay'>
                     <div className='modal'>
                         <div className='add-header'>
-                            <h1>Add Employee</h1>
+                            <h1>{modalMode === 'edit' ? 'Edit Employee' : 'Add Employee'}</h1>
                             <button onClick={() => { setShowModal(false) }}>x</button>
                         </div>
-                        <form onSubmit={handleFormSubmit}>
+                        <form onSubmit={modalMode === 'edit' ? updateEmployee : handleFormSubmit}>
                             <div className='name-fields'>
                                 <div>
                                     <h3>FIRST NAME</h3>
-                                    <input type="text" name="firstName" placeholder="eg. Alice" required />
+                                    <input type="text" name="firstName" placeholder="eg. Alice" defaultValue={modalMode === 'edit' ? selectedEmployee?.fname : ''} required />
                                 </div>
                                 <div>
                                     <h3>LAST NAME</h3>
-                                    <input type="text" name="lastName" placeholder="eg. Wong" required />
+                                    <input type="text" name="lastName" placeholder="eg. Wong" defaultValue={modalMode === 'edit' ? selectedEmployee?.lname : ''} required />
                                 </div>
                             </div>
                             <h3>EMAIL</h3>
-                            <input className='email-input' type="text" name="email" placeholder="eg alice@wong.com" required />
+                            <input className='email-input' type="text" name="email" placeholder="eg alice@wong.com" defaultValue={modalMode === 'edit' ? selectedEmployee?.email : ''} required />
                             <div className='phoneNwage'>
                                 <div>
                                     <h3>PHONE</h3>
-                                    <input type="text" name="phone" placeholder="911" required />
+                                    <input type="text" name="phone" placeholder="911" defaultValue={modalMode === 'edit' ? selectedEmployee?.phonenum : ''} required />
                                 </div>
                                 <div>
                                     <h3>WAGE ($/hr)</h3>
-                                    <input type="text" name="wage" placeholder="eg. 25" required />
+                                    <input type="text" name="wage" placeholder="eg. 25" defaultValue={modalMode === 'edit' ? selectedEmployee?.wage : ''} required />
                                 </div>
-
                             </div>
                             <h3>SKILLS</h3>
                             <div className="skills-options">
@@ -200,9 +219,8 @@ export default function AdminEmployees() {
                             </div>
                             <div className='form-buttons'>
                                 <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit">Add Employee</button>
+                                <button type="submit">{modalMode === 'edit' ? 'Edit Employee' : 'Add Employee'}</button>
                             </div>
-
                         </form>
                     </div>
                 </div>
@@ -214,7 +232,7 @@ export default function AdminEmployees() {
                         <h2>Employees</h2>
                         <p>Manage your team members</p>
                     </div>
-                    <button onClick={() => { setShowModal(true) }}>+Add Employee</button>
+                    <button onClick={() => { setShowModal(true); setModalMode('add') }}>+Add Employee</button>
                 </div>
                 <div className='Employees'>
                     <div className='Employee-Info'>

@@ -65,3 +65,42 @@ export async function deleteEmployee(req, res) {
     }
 
 }
+
+export async function updateEmployee(req, res) {
+    const { firstName, lastName, email, phone, wage, employeeid, skills } = req.body
+
+    try {
+        // Update the employee record
+        const result = await pool.query(
+            `UPDATE public.employee 
+             SET fname = $1, lname = $2, email = $3, phonenum = $4, wage = $5
+             WHERE employeeid = $6
+             RETURNING *`,
+            [firstName, lastName, email, phone, wage, employeeid]
+        )
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Employee not found' })
+        }
+
+        // Delete existing skills and re-insert updated ones
+        await pool.query(
+            'DELETE FROM public.employeeskill WHERE employeeid = $1',
+            [employeeid]
+        )
+
+        if (skills && skills.length > 0) {
+            for (const skill of skills) {
+                await pool.query(
+                    'INSERT INTO public.employeeskill (employeeid, skill) VALUES ($1, $2)',
+                    [employeeid, skill]
+                )
+            }
+        }
+
+        return res.status(200).json({ message: 'Employee updated successfully' })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: error.message })
+    }
+}
