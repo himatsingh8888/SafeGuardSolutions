@@ -81,6 +81,7 @@ export default function AdminEmployees() {
         const phone = formData.get("phone")
         const wage = formData.get("wage")
 
+
         try {
             const res = await fetch(`${API_BASE}/api/admin/addEmployee`, {
                 method: 'POST',
@@ -144,14 +145,15 @@ export default function AdminEmployees() {
         const email = formData.get("email")
         const phone = formData.get("phone")
         const wage = formData.get("wage")
+        const employeeid = selectedEmployee.employeeid
         try {
             const res = await fetch(`${API_BASE}/api/admin/updateEmployee`, {
-                method: 'UPDATE',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ firstName, lastName, email, phone, wage, skills: selectedSkills })
+                body: JSON.stringify({ firstName, lastName, email, phone, wage, employeeid, skills: selectedSkills })
 
             })
             const data = await res.json()
@@ -159,6 +161,7 @@ export default function AdminEmployees() {
             if (res.ok) {
                 console.log(data.message)
                 setRefresh(prev => prev + 1)
+                setShowModal(false)
 
 
             }
