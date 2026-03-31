@@ -54,6 +54,15 @@ export default function AdminInventory() {
         return date.toLocaleDateString('en-US', options)
     }
 
+    function formatDateForInput(dateString) {
+        if (!dateString) return ''
+        const date = new Date(dateString)
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
     React.useEffect(() => {
         const fetchInventory = async () => {
             try {
@@ -188,11 +197,11 @@ export default function AdminInventory() {
                                 </div>
                                 <div>
                                     <p className='field-label'>PURCHASE DATE</p>
-                                    <input type="date" name="dateOfPurchase" defaultValue={modalMode === 'edit' ? selectedItem?.dateofpurchase : ''} required />
+                                    <input type="date" name="dateOfPurchase" defaultValue={modalMode === 'edit' ? formatDateForInput(selectedItem?.dateofpurchase) : ''} required />
                                 </div>
                             </div>
                             <p className='field-label'>WARRANTY EXPIRY</p>
-                            <input className='full-width-input' type="date" name="warranty" defaultValue={modalMode === 'edit' ? selectedItem?.warranty : ''} />
+                            <input className='full-width-input' type="date" name="warranty" defaultValue={modalMode === 'edit' ? formatDateForInput(selectedItem?.warranty) : ''} />
                             <div className='modal-footer'>
                                 <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
                                 <button type="submit">{modalMode === 'edit' ? 'Edit Item' : 'Add Item'}</button>
