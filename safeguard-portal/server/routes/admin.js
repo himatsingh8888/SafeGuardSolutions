@@ -1,5 +1,5 @@
 import express from 'express'
-import { deleteEmployee, getEmployees, addEmployee, updateEmployee } from '../controllers/adminController.js';
+import { deleteEmployee, getEmployees, addEmployee, updateEmployee, addInventory, deleteInventory, updateInventory, getInventory } from '../controllers/adminController.js';
 
 
 
@@ -9,4 +9,10 @@ adminRouter.get('/getEmployees', getEmployees)
 adminRouter.post('/addEmployee', addEmployee)
 adminRouter.delete('/deleteEmployee', deleteEmployee)
 adminRouter.put('/updateEmployee', updateEmployee)
+
+// Inventory routes
+adminRouter.get('/getInventory', getInventory)
+adminRouter.post('/addInventory', addInventory)
+adminRouter.delete('/deleteInventory', deleteInventory)
+adminRouter.put('/updateInventory', updateInventory)
 

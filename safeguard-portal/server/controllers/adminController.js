@@ -104,3 +104,66 @@ export async function updateEmployee(req, res) {
         return res.status(500).json({ message: error.message })
     }
 }
+
+// Inventory CRUD Operations
+export async function getInventory(req, res) {
+    try {
+        const result = await pool.query('SELECT * FROM public.inventory ORDER BY inventoryid')
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to fetch inventory' })
+    }
+}
+
+export async function addInventory(req, res) {
+    const { itemType, supplierCompany, quantity, dateOfPurchase, warranty } = req.body
+
+    try {
+        await pool.query(
+            'INSERT INTO public.inventory (itemtype, suppliercompany, quantity, dateofpurchase, warranty) VALUES ($1, $2, $3, $4, $5)',
+            [itemType, supplierCompany, quantity, dateOfPurchase, warranty || null]
+        )
+        return res.status(200).json({ message: 'Inventory item successfully added' })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+export async function deleteInventory(req, res) {
+    const { inventoryid } = req.body
+    if (!inventoryid) {
+        return res.status(400).json({ message: 'Missing inventory id' })
+    }
+
+    try {
+        await pool.query('DELETE FROM public.inventory WHERE inventoryid = $1', [inventoryid])
+        res.status(200).json({ message: 'Inventory item successfully deleted' })
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
+
+export async function updateInventory(req, res) {
+    const { itemType, supplierCompany, quantity, dateOfPurchase, warranty, inventoryid } = req.body
+
+    try {
+        const result = await pool.query(
+            `UPDATE public.inventory 
+             SET itemtype = $1, suppliercompany = $2, quantity = $3, dateofpurchase = $4, warranty = $5
+             WHERE inventoryid = $6
+             RETURNING *`,
+            [itemType, supplierCompany, quantity, dateOfPurchase, warranty || null, inventoryid]
+        )
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Inventory item not found' })
+        }
+
+        return res.status(200).json({ message: 'Inventory item updated successfully' })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ message: error.message })
+    }
+}
