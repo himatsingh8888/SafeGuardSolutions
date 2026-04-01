@@ -31,6 +31,19 @@
     transition: background-color 0.2s ease;
 }
 
+/* Quote Requests - 7 columns */
+.quote-request-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.8fr 1fr 1fr 0.8fr auto;
+    align-items: center;
+    border: 0.5px solid rgba(0, 0, 0, 0.07);
+    transition: background-color 0.2s ease;
+}
+
+.quote-request-row:hover {
+    background-color: #fafafa;
+}
+
 .inventory-row:hover {
     background-color: #fafafa;
 }
@@ -241,4 +254,57 @@ input:focus {
     margin-left: 10px;
     transition: 0.3s;
     margin-top: 30px;
+}
+
+/* Quote Requests specific styles */
+.notes-preview {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: 400;
+}
+
+.view-notes-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: #555;
+    margin-top: 4px;
+    transition: 0.2s;
+}
+
+.view-notes-btn:hover {
+    background-color: #dcd8cc;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.status-badge.completed {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
+.modal-notes-content {
+    padding: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.modal-notes-content p {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #333;
 }

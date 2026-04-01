@@ -44,6 +44,11 @@ export default function AdminSubNavbar() {
                 className={({ isActive }) => isActive ? "active-link" : null}
                 to="/admin/reviews"
             >Reviews</NavLink>
+
+            <NavLink
+                className={({ isActive }) => isActive ? "active-link" : null}
+                to="/admin/quote-requests"
+            >Quote Requests</NavLink>
         </div>
     )
 }

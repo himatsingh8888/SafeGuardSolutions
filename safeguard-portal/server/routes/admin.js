@@ -1,5 +1,5 @@
 import express from 'express'
-import { deleteEmployee, getEmployees, addEmployee, updateEmployee, addInventory, deleteInventory, updateInventory, getInventory } from '../controllers/adminController.js';
+import { deleteEmployee, getEmployees, addEmployee, updateEmployee, addInventory, deleteInventory, updateInventory, getInventory, updateQuoteRequest, deleteQuoteRequest } from '../controllers/adminController.js';
 
 
 
@@ -15,4 +15,8 @@ adminRouter.get('/getInventory', getInventory)
 adminRouter.post('/addInventory', addInventory)
 adminRouter.delete('/deleteInventory', deleteInventory)
 adminRouter.put('/updateInventory', updateInventory)
+
+// Quote Request routes
+adminRouter.put('/updateQuoteRequest', updateQuoteRequest)
+adminRouter.delete('/deleteQuoteRequest', deleteQuoteRequest)
 

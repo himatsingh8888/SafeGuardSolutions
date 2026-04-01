@@ -167,3 +167,40 @@ export async function updateInventory(req, res) {
         return res.status(500).json({ message: error.message })
     }
 }
+
+// Quote Request CRUD Operations
+export async function updateQuoteRequest(req, res) {
+    const { requestid, status } = req.body
+
+    try {
+        const result = await pool.query(
+            `UPDATE public.quoterequest 
+             SET status = $1
+             WHERE requestid = $2`,
+            [status, requestid]
+        )
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Quote request not found' })
+        }
+
+        return res.status(200).json({ message: 'Quote request updated successfully' })
+    } catch (error) {
+        console.error(error)
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+export async function deleteQuoteRequest(req, res) {
+    const { requestid } = req.body
+    if (!requestid) {
+        return res.status(400).json({ message: 'Missing request id' })
+    }
+
+    try {
+        await pool.query('DELETE FROM public.quoterequest WHERE requestid = $1', [requestid])
+        res.status(200).json({ message: 'Quote request deleted successfully' })
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
