@@ -1,0 +1,107 @@
+.expand-list {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 0.5px solid rgba(0, 0, 0, 0.08);
+    margin: 0 40px;
+}
+
+.expand-row {
+    border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
+}
+
+.expand-row:last-child {
+    border-bottom: none;
+}
+
+.expand-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    cursor: pointer;
+}
+
+.expand-header:hover {
+    background: #fafaf8;
+}
+
+.expand-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.expand-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #111;
+}
+
+.expand-email {
+    font-size: 0.82rem;
+    color: #888;
+}
+
+.expand-arrow {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.expand-body {
+    background: #fafafa;
+    padding: 14px 20px 14px 72px;
+    border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.expand-field label {
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: block;
+    margin-bottom: 3px;
+}
+
+.expand-field span {
+    font-size: 0.85rem;
+    color: #333;
+}
+
+.expand-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.expand-actions button {
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: transparent;
+    color: #111;
+    transition: 0.2s;
+}
+
+.expand-actions button:hover {
+    background: #dcd8cc;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #E6F1FB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: #185FA5;
+}

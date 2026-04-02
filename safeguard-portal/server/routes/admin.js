@@ -1,10 +1,16 @@
 import express from 'express'
-import { deleteEmployee, getEmployees, addEmployee, updateEmployee, addInventory, deleteInventory, updateInventory, getInventory, updateQuoteRequest, deleteQuoteRequest } from '../controllers/adminController.js';
+import {
+    deleteEmployee, getEmployees, addEmployee, updateEmployee,
+    addInventory, deleteInventory, updateInventory, getInventory,
+    updateQuoteRequest, deleteQuoteRequest,
+    getClients
+} from '../controllers/adminController.js';
 
 
 
 export const adminRouter = express.Router();
 
+//Employee Routes
 adminRouter.get('/getEmployees', getEmployees)
 adminRouter.post('/addEmployee', addEmployee)
 adminRouter.delete('/deleteEmployee', deleteEmployee)
@@ -19,4 +25,9 @@ adminRouter.put('/updateInventory', updateInventory)
 // Quote Request routes
 adminRouter.put('/updateQuoteRequest', updateQuoteRequest)
 adminRouter.delete('/deleteQuoteRequest', deleteQuoteRequest)
+
+//Client Routes
+adminRouter.get('/getClients', getClients)
+
+
 
