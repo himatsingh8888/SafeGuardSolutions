@@ -204,3 +204,20 @@ export async function deleteQuoteRequest(req, res) {
         res.status(400).json({ message: error.message })
     }
 }
+
+export async function getClients(req, res) {
+    try {
+        const result = await pool.query('SELECT * FROM client')
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'No clients found' })
+        }
+
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to fetch clients' })
+    }
+}
+
+
