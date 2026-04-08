@@ -301,7 +301,236 @@
   max-height: 360px;
 }
 
+/* ----- Your reviews (client dashboard) ----- */
+
+.client-reviews-dashboard-section .client-panel-card.client-reviews-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.client-reviews-intro {
+  margin: 0;
+  padding: 20px 22px 18px;
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  border-bottom: 1px solid #ebe7e0;
+  background: linear-gradient(180deg, #fdfcfa 0%, #faf8f5 100%);
+}
+
+.client-reviews-block {
+  padding: 22px 22px 24px;
+}
+
+.client-reviews-subtitle {
+  margin: 0 0 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6d6a64;
+}
+
+.client-reviews-empty {
+  padding: 28px 20px;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px dashed #cfc8bc;
+  background: #faf9f7;
+}
+
+.client-reviews-empty p {
+  margin: 0 0 8px;
+  color: #444;
+  font-size: 0.98rem;
+}
+
+.client-reviews-empty-hint {
+  font-size: 0.88rem;
+  color: #888;
+}
+
+.client-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.client-review-item {
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid #e5e0d8;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-left: 4px solid #c9a227;
+}
+
+.client-review-item-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 8px;
+}
+
+.client-review-display-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1f1f1f;
+}
+
+.client-review-date-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5c584f;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f0ebe3;
+  border: 1px solid #e3dcd2;
+}
+
+.client-review-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.client-review-stars {
+  color: #d4a017;
+  font-size: 1.05rem;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.client-review-rating-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.client-review-comment {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f8f6f2;
+  border: 1px solid #ebe6de;
+  color: #3a3a3a;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.client-review-no-comment {
+  margin: 0;
+  font-size: 0.88rem;
+  font-style: italic;
+  color: #999;
+}
+
+.client-review-compose {
+  padding: 22px 22px 24px;
+  background: #f3f1ec;
+  border-top: 1px solid #e0dbd3;
+}
+
+.client-review-compose .client-reviews-subtitle {
+  margin-bottom: 16px;
+}
+
+.client-review-form {
+  margin: 0;
+}
+
+.client-review-form-grid {
+  display: grid;
+  grid-template-columns: 1fr minmax(160px, 220px);
+  gap: 16px 20px;
+  align-items: start;
+}
+
+.client-review-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.client-review-label-text {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #45423c;
+  letter-spacing: 0.02em;
+}
+
+.client-review-label-full {
+  grid-column: 1 / -1;
+}
+
+.client-review-input,
+.client-review-select {
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid #c9c4bb;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  color: #222;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.client-review-input:hover,
+.client-review-select:hover {
+  border-color: #a8a29a;
+}
+
+.client-review-input:focus,
+.client-review-select:focus {
+  outline: none;
+  border-color: #6b6560;
+  box-shadow: 0 0 0 3px rgba(107, 101, 96, 0.15);
+}
+
+.client-review-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  resize: vertical;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.client-review-feedback {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.client-review-actions {
+  margin-top: 18px;
+}
+
+.client-review-actions .client-btn-primary {
+  margin-top: 0;
+  min-width: 160px;
+}
+
 @media (max-width: 768px) {
+  .client-review-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .client-reviews-intro {
+    padding: 18px 16px 16px;
+  }
+
+  .client-reviews-block,
+  .client-review-compose {
+    padding: 18px 16px 20px;
+  }
+
   .client-profile-grid {
     grid-template-columns: 1fr;
   }

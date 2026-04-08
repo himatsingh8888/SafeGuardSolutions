@@ -5,11 +5,13 @@ import "../admin/AdminDashboard.css";
 import "./ClientDashboard.css";
 import {
   fetchClient,
+  fetchClientReviews,
   fetchInstallationDetail,
   fetchInstallations,
   fetchPayments,
   getStoredClientId,
   statusToProgress,
+  submitClientReview,
   updateClient,
 } from "../../api/clientApi.js";
 
@@ -36,6 +38,17 @@ function statusBadgeClass(status) {
   return "status-scheduled";
 }
 
+function formatReviewDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function ClientDashboard() {
   const clientId = getStoredClientId();
 
@@ -55,6 +68,14 @@ export default function ClientDashboard() {
   });
   const [installations, setInstallations] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [myReviews, setMyReviews] = useState([]);
+
+  const [reviewName, setReviewName] = useState("");
+  const [reviewRating, setReviewRating] = useState("5");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState(profile);
@@ -74,10 +95,11 @@ export default function ClientDashboard() {
     setLoading(true);
     setLoadError("");
     try {
-      const [clientRow, instList, payList] = await Promise.all([
+      const [clientRow, instList, payList, reviewList] = await Promise.all([
         fetchClient(clientId),
         fetchInstallations(clientId, INSTALLATION_LIST_LIMIT),
         fetchPayments(clientId),
+        fetchClientReviews(clientId),
       ]);
 
       if (clientRow) {
@@ -101,6 +123,7 @@ export default function ClientDashboard() {
 
       setInstallations(instList);
       setPayments(payList);
+      setMyReviews(reviewList);
     } catch (err) {
       console.error(err);
       setLoadError(err.message || "Could not load dashboard data.");
@@ -156,6 +179,42 @@ export default function ClientDashboard() {
     if (!message.trim()) return;
     setMessageSent(true);
     setMessage("");
+  };
+
+  const handleSubmitReview = async (event) => {
+    event.preventDefault();
+    setReviewError("");
+    setReviewSuccess(false);
+
+    const name = reviewName.trim();
+    const ratingNum = parseInt(reviewRating, 10);
+    if (!name) {
+      setReviewError("Enter the name you want shown with your review.");
+      return;
+    }
+    if (!Number.isInteger(ratingNum) || ratingNum < 0 || ratingNum > 5) {
+      setReviewError("Choose a rating from 0 to 5.");
+      return;
+    }
+
+    if (!clientId) return;
+    setReviewSubmitting(true);
+    try {
+      await submitClientReview(clientId, {
+        reviewName: name,
+        rating: ratingNum,
+        reviewComment: reviewComment.trim(),
+      });
+      setReviewSuccess(true);
+      setReviewComment("");
+      const list = await fetchClientReviews(clientId);
+      setMyReviews(list);
+    } catch (err) {
+      console.error(err);
+      setReviewError(err.message || "Could not submit review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const handleEditProfile = () => {
@@ -556,6 +615,125 @@ export default function ClientDashboard() {
                 </table>
               </div>
             )}
+          </section>
+
+          <section className="dashboard-section client-reviews-dashboard-section">
+            <h3 className="section-title">Your reviews</h3>
+            <div className="client-panel-card client-reviews-card">
+              <p className="client-reviews-intro">
+                Share feedback linked to your account. Your team sees it on the admin reviews page;
+                the review date is set automatically when you submit.
+              </p>
+
+              <div className="client-reviews-block">
+                <h4 className="client-reviews-subtitle">Past reviews</h4>
+                {myReviews.length > 0 ? (
+                  <ul className="client-review-list">
+                    {myReviews.map((r) => (
+                      <li key={r.id} className="client-review-item">
+                        <div className="client-review-item-top">
+                          <span className="client-review-display-name">
+                            {r.reviewName || "Review"}
+                          </span>
+                          <time
+                            className="client-review-date-badge"
+                            dateTime={String(r.reviewDate || "")}
+                          >
+                            {formatReviewDate(r.reviewDate)}
+                          </time>
+                        </div>
+                        <div className="client-review-rating-row" aria-label={`${r.rating} out of 5 stars`}>
+                          <span className="client-review-stars" aria-hidden>
+                            {"★".repeat(Math.min(5, Math.max(0, r.rating)))}
+                          </span>
+                          <span className="client-review-rating-label">{r.rating} / 5</span>
+                        </div>
+                        {r.reviewComment ? (
+                          <blockquote className="client-review-comment">{r.reviewComment}</blockquote>
+                        ) : (
+                          <p className="client-review-no-comment">No written comment</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="client-reviews-empty">
+                    <p>You haven&apos;t submitted a review yet.</p>
+                    <span className="client-reviews-empty-hint">
+                      Use the form below when you&apos;re ready.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="client-review-compose">
+                <h4 className="client-reviews-subtitle">Write a new review</h4>
+                <form className="client-review-form" onSubmit={handleSubmitReview}>
+                  <div className="client-review-form-grid">
+                    <label className="client-review-label">
+                      <span className="client-review-label-text">Name to display</span>
+                      <input
+                        type="text"
+                        className="client-review-input"
+                        maxLength={100}
+                        value={reviewName}
+                        onChange={(e) => {
+                          setReviewName(e.target.value);
+                          setReviewError("");
+                          setReviewSuccess(false);
+                        }}
+                        placeholder="How you'd like to appear publicly"
+                        required
+                      />
+                    </label>
+                    <label className="client-review-label client-review-label-rating">
+                      <span className="client-review-label-text">Rating</span>
+                      <select
+                        className="client-review-select"
+                        value={reviewRating}
+                        onChange={(e) => {
+                          setReviewRating(e.target.value);
+                          setReviewError("");
+                          setReviewSuccess(false);
+                        }}
+                      >
+                        <option value="5">5 — Excellent</option>
+                        <option value="4">4 — Good</option>
+                        <option value="3">3 — Okay</option>
+                        <option value="2">2 — Poor</option>
+                        <option value="1">1 — Very poor</option>
+                        <option value="0">0 — Lowest</option>
+                      </select>
+                    </label>
+                    <label className="client-review-label client-review-label-full">
+                      <span className="client-review-label-text">Comment (optional)</span>
+                      <textarea
+                        rows={4}
+                        value={reviewComment}
+                        onChange={(e) => {
+                          setReviewComment(e.target.value);
+                          setReviewError("");
+                          setReviewSuccess(false);
+                        }}
+                        placeholder="Installation experience, support, quality — anything that helps us improve."
+                        className="client-textarea client-review-textarea"
+                      />
+                    </label>
+                  </div>
+                  {reviewError && <p className="message-error client-review-feedback">{reviewError}</p>}
+                  {reviewSuccess && (
+                    <p className="message-success client-review-feedback">
+                      Thanks — your review was saved.
+                    </p>
+                  )}
+                  <div className="client-review-actions">
+                    <button type="submit" className="client-btn-primary" disabled={reviewSubmitting}>
+                      {reviewSubmitting ? "Submitting…" : "Submit review"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </section>
 
           <section className="dashboard-section">

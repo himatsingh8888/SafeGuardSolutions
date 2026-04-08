@@ -24,8 +24,18 @@ export async function loginUser(req, res){
         }else{
             const token = jwt.sign({id: user.id, role: user.role}, process.env.JWT_SECRET, {expiresIn: "1h"})
 
+            let clientId = undefined
+            if (user.role === 'client') {
+                const cr = await pool.query(
+                    'SELECT clientid FROM client WHERE lower(email) = lower($1) LIMIT 1',
+                    [user.email]
+                )
+                if (cr.rows[0]) {
+                    clientId = cr.rows[0].clientid
+                }
+            }
 
-            return res.json({token: token, role: user.role})
+            return res.json({ token, role: user.role, ...(clientId != null ? { clientId } : {}) })
         }
 
 

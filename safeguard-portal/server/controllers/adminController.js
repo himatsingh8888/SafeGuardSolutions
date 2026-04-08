@@ -1,5 +1,29 @@
 import pool from '../db/db.js'
 
+export async function getReviews(req, res) {
+    try {
+        const result = await pool.query(`
+            SELECT
+                r.reviewid,
+                r.reviewcomment,
+                r.reviewname,
+                r.rating,
+                r.reviewdate,
+                r.client AS clientid,
+                c.fname AS client_fname,
+                c.lname AS client_lname,
+                c.email AS client_email
+            FROM reviews r
+            INNER JOIN client c ON c.clientid = r.client
+            ORDER BY r.reviewdate DESC NULLS LAST, r.reviewid DESC
+        `)
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to fetch reviews' })
+    }
+}
+
 export async function getEmployees(req, res) {
     try {
         const result = await pool.query(

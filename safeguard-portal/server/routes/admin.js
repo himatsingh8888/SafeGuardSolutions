@@ -1,10 +1,10 @@
 import express from 'express'
-import { deleteEmployee, getEmployees } from '../controllers/adminController.js';
-import { addEmployee } from '../controllers/adminController.js';
+import { addEmployee, deleteEmployee, getEmployees, getReviews } from '../controllers/adminController.js';
 
 
 export const adminRouter = express.Router();
 
+adminRouter.get('/getReviews', getReviews)
 adminRouter.get('/getEmployees', getEmployees)
 adminRouter.post('/addEmployee', addEmployee)
 adminRouter.delete('/deleteEmployee', deleteEmployee)
