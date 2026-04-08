@@ -16,6 +16,9 @@ import AdminService from "./pages/admin/AdminService.jsx";
 import AdminPayments from "./pages/admin/AdminPayments.jsx";
 import AdminQuoteRequests from "./pages/admin/AdminQuoteRequests.jsx";
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
+import EmployeeLogin from "./pages/employee/EmployeeLogin.jsx";
+import EmployeeDashboard from "./pages/employee/EmployeeDashboard.jsx";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -23,6 +26,8 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/quote-request" element={<QuoteRequest />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/employee/login" element={<EmployeeLogin />} />
+        <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
         <Route path="/client/dashboard" element={<ClientDashboard />} />
         <Route path="/tech/dashboard" element={<TechDashboard />} />
 

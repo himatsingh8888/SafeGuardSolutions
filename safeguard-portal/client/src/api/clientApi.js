@@ -87,11 +87,7 @@ export function normalizePayment(raw) {
   };
 }
 
-/**
- * Which client row to load for /client/dashboard.
- * In dev, `VITE_DEV_CLIENT_ID` in client/.env wins over localStorage so a stale
- * clientId from an old login (e.g. 1 = seeded "John" data) does not override your .env.
- */
+
 export function getStoredClientId() {
   const devId = import.meta.env.VITE_DEV_CLIENT_ID;
   if (import.meta.env.DEV && devId !== undefined && devId !== null && String(devId).trim() !== "") {

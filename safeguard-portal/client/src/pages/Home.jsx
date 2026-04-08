@@ -70,6 +70,8 @@ export default function Home() {
             <a href="#about">About</a>
             <span className="nav-sep">|</span>
             <Link to="/login">Login</Link>
+            <span className="nav-sep">|</span>
+            <Link to="/employee/login">Employee</Link>
           </div>
         </div>
       </nav>

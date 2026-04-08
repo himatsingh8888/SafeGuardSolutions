@@ -1,0 +1,341 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+* { box-sizing: border-box; }
+
+.emp-shell {
+  min-height: 100vh;
+  background-color: #e8e2d4;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Header ── */
+.emp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111110;
+  color: #fff;
+  padding: 0 40px;
+  height: 56px;
+}
+.emp-header-left { display: flex; align-items: center; gap: 12px; }
+.emp-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+}
+.emp-header-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.2); }
+.emp-header-label { font-size: 13px; color: rgba(255,255,255,0.55); letter-spacing: 0.04em; }
+.emp-header-right { display: flex; align-items: center; gap: 14px; }
+.emp-user-pill { font-size: 13px; color: rgba(255,255,255,0.7); }
+.emp-logout-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  transition: 0.2s;
+}
+.emp-logout-btn:hover { color: #fff; border-color: rgba(255,255,255,0.45); }
+
+/* ── Main ── */
+.emp-main { max-width: 1060px; margin: 0 auto; padding: 40px 24px 64px; }
+.emp-loading { text-align: center; padding: 80px; color: #888; font-size: 14px; }
+.emp-error-banner {
+  background: #fff0f0;
+  border: 1px solid #f5c6cb;
+  color: #b00020;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* ── Page title ── */
+.emp-page-title { margin-bottom: 32px; }
+.emp-page-title h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 0.04em;
+  color: #111110;
+  margin: 0 0 4px;
+}
+.emp-page-title p { font-size: 14px; color: #777; font-weight: 300; margin: 0; }
+
+/* ── Section headers ── */
+.emp-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  margin-top: 36px;
+}
+.emp-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #555;
+  margin: 0;
+}
+.emp-query-tag {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #888;
+  background: #ede9e0;
+  border: 1px solid #ccc9bf;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.emp-section { margin-bottom: 4px; }
+
+/* ── Stats row ── */
+.emp-stats-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.emp-stat-card {
+  background: #faf9f6;
+  border: 1px solid #d6d0c4;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.emp-stat-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+}
+.emp-stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: #111110;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+.emp-stat-unit { font-size: 14px; color: #bbb; font-family: 'DM Sans', sans-serif; margin-left: 2px; }
+
+/* ── Panel ── */
+.emp-panel {
+  background: #faf9f6;
+  border: 1px solid #d6d0c4;
+  padding: 24px;
+}
+.emp-muted { color: #aaa; font-size: 14px; }
+
+/* ── Profile grid ── */
+.emp-profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 32px;
+}
+.emp-field { display: flex; flex-direction: column; gap: 4px; }
+.emp-field-full { grid-column: 1 / -1; }
+.emp-field-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #aaa;
+}
+.emp-field-value { font-size: 15px; color: #111110; display: flex; align-items: center; gap: 10px; }
+
+/* ── Inline phone edit ── */
+.emp-inline-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.emp-inline-input {
+  height: 34px;
+  width: 180px;
+  border: 1px solid #ccc9bf;
+  background: #fff;
+  padding: 0 10px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 4px;
+  outline: none;
+}
+.emp-inline-input:focus { border-color: #111; }
+.emp-inline-err { font-size: 13px; color: #b00020; }
+.emp-link-btn {
+  all: unset;
+  cursor: pointer;
+  font-size: 12px;
+  color: #888;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.emp-link-btn:hover { color: #111; }
+
+/* ── Skills ── */
+.emp-skills-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.emp-skill-tag {
+  background: #ede9e0;
+  color: #555;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc9bf;
+}
+
+/* ── Tables ── */
+.emp-table-wrap {
+  background: #faf9f6;
+  border: 1px solid #d6d0c4;
+  overflow-x: auto;
+}
+.emp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.emp-table thead tr {
+  background: #f4f2ec;
+  border-bottom: 1px solid #ddd9cf;
+}
+.emp-table th {
+  text-align: left;
+  padding: 11px 16px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #999;
+  white-space: nowrap;
+}
+.emp-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #eeece6;
+  color: #222;
+  vertical-align: middle;
+}
+.emp-table tbody tr:last-child td { border-bottom: none; }
+.emp-table tbody tr:hover { background: #f8f6f0; }
+.emp-notes { max-width: 240px; color: #666; font-size: 13px; }
+
+/* ── Buttons ── */
+.emp-btn-sm {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 5px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  color: #444;
+  transition: 0.2s;
+}
+.emp-btn-sm:hover { background: #ede9e0; }
+.emp-btn-dark {
+  background: #111110;
+  color: #fff;
+  border-color: #111110;
+}
+.emp-btn-dark:hover { background: #333; border-color: #333; }
+.emp-btn-danger {
+  background: transparent;
+  color: #b00020;
+  border-color: #e8b4bb;
+}
+.emp-btn-danger:hover { background: #fce8eb; }
+
+/* ── Badges ── */
+.emp-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.emp-badge-complete { background: #e8f5e9; color: #2e7d32; }
+.emp-badge-progress { background: #fff8e1; color: #f57f17; }
+.emp-badge-cancel   { background: #fce4ec; color: #c62828; }
+.emp-badge-schedule { background: #e3f2fd; color: #1565c0; }
+.emp-badge-follow   { background: #f3e5f5; color: #6a1b9a; }
+
+/* ── Colleagues / Division ── */
+.emp-colleagues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.emp-colleague-card {
+  border: 1px solid #ddd9cf;
+  background: #f4f2ec;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.emp-colleague-name { font-size: 14px; font-weight: 600; color: #111110; }
+.emp-skills-sm { gap: 4px; }
+.emp-skill-tag-sm { font-size: 11px; padding: 2px 8px; }
+
+/* ── Cancel modal ── */
+.emp-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.emp-modal {
+  background: #faf9f6;
+  width: 420px;
+  border: 1px solid #d6d0c4;
+  padding: 0;
+}
+.emp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0ddd6;
+}
+.emp-modal-header h4 { margin: 0; font-size: 15px; font-weight: 600; color: #111; }
+.emp-modal-close {
+  all: unset;
+  cursor: pointer;
+  font-size: 20px;
+  color: #999;
+  line-height: 1;
+}
+.emp-modal-close:hover { color: #111; }
+.emp-modal-body { padding: 20px; font-size: 14px; color: #444; }
+.emp-modal-body p { margin: 0 0 10px; }
+.emp-cascade-notice {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #6d4c00;
+  border-radius: 4px;
+}
+.emp-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #e0ddd6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 800px) {
+  .emp-stats-row { grid-template-columns: repeat(3, 1fr); }
+  .emp-profile-grid { grid-template-columns: 1fr; }
+  .emp-header { padding: 0 16px; }
+  .emp-main { padding: 24px 16px 48px; }
+}
+@media (max-width: 500px) {
+  .emp-stats-row { grid-template-columns: repeat(2, 1fr); }
+}

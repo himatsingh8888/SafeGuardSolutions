@@ -5,6 +5,7 @@ import { apiRouter } from "./routes/api.js";
 import { authRouter } from "./routes/auth.js";
 import { adminRouter } from "./routes/admin.js";
 import { clientRouter } from "./routes/clientRoute.js";
+import { employeeRouter } from "./routes/employee.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/client", clientRouter);
+app.use("/api/employee", employeeRouter);
 app.use("/api", apiRouter);
 
 const PORT = Number(process.env.PORT) || 5001;

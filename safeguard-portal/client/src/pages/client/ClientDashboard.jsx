@@ -577,8 +577,7 @@ export default function ClientDashboard() {
                 </button>
                 {messageSent && (
                   <p className="message-success">
-                    Message not sent to the server yet — wire up your team&apos;s message endpoint
-                    when ready.
+                    Message not sent to the server yet 
                   </p>
                 )}
               </form>
