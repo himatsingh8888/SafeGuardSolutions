@@ -8,7 +8,7 @@ export default function QuoteRequest() {
     name: "",
     email: "",
     phone: "",
-    location: "",
+    locationType: "",
     address: "",
     serviceType: "Choose one",
     notes: ""
@@ -53,24 +53,40 @@ export default function QuoteRequest() {
     
     if (Object.keys(validationErrors).length === 0) {
       setIsSubmitting(true);
-      // Log form data to console
-      console.log("Quote Request Form Data:", formData);
       
-      // Simulate API call delay
-      setTimeout(() => {
-        alert("Thank you for your request! We'll contact you soon.");
-        setIsSubmitting(false);
-        // Reset form
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          location: "",
-          address: "",
-          serviceType: "Security Cameras",
-          notes: ""
+      fetch("http://localhost:5001/api/quote-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
+        .then((res) => {
+          if (res.ok) {
+            alert("Request submitted successfully");
+            setFormData({
+              name: "",
+              email: "",
+              phone: "",
+              locationType: "",
+              address: "",
+              serviceType: "Choose one",
+              notes: ""
+            });
+          } else {
+            res.json().then((data) => {
+              console.error("Error:", data);
+              alert("Something went wrong");
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Error:", err);
+          alert("Something went wrong");
+        })
+        .finally(() => {
+          setIsSubmitting(false);
         });
-      }, 500);
     } else {
       setErrors(validationErrors);
     }
@@ -146,12 +162,12 @@ export default function QuoteRequest() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="location">Business or Home Location</label>
+              <label htmlFor="locationType">Business or Home Location</label>
               <input
                 type="text"
-                id="location"
-                name="location"
-                value={formData.location}
+                id="locationType"
+                name="locationType"
+                value={formData.locationType}
                 onChange={handleChange}
                 placeholder="e.g., Business, Residential Home, Office Building"
               />

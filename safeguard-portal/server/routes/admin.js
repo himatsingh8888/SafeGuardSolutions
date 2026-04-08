@@ -1,11 +1,34 @@
 import express from 'express'
-import { addEmployee, deleteEmployee, getEmployees, getReviews } from '../controllers/adminController.js';
+import {
+    deleteEmployee, getEmployees, addEmployee, updateEmployee,
+    addInventory, deleteInventory, updateInventory, getInventory,
+    updateQuoteRequest, deleteQuoteRequest,
+    getClients, getReviews
+} from '../controllers/adminController.js';
+
 
 
 export const adminRouter = express.Router();
 
 adminRouter.get('/getReviews', getReviews)
+//Employee Routes
 adminRouter.get('/getEmployees', getEmployees)
 adminRouter.post('/addEmployee', addEmployee)
 adminRouter.delete('/deleteEmployee', deleteEmployee)
+adminRouter.put('/updateEmployee', updateEmployee)
+
+// Inventory routes
+adminRouter.get('/getInventory', getInventory)
+adminRouter.post('/addInventory', addInventory)
+adminRouter.delete('/deleteInventory', deleteInventory)
+adminRouter.put('/updateInventory', updateInventory)
+
+// Quote Request routes
+adminRouter.put('/updateQuoteRequest', updateQuoteRequest)
+adminRouter.delete('/deleteQuoteRequest', deleteQuoteRequest)
+
+//Client Routes
+adminRouter.get('/getClients', getClients)
+
+
 

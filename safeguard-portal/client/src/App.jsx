@@ -14,6 +14,7 @@ import AdminInventory from "./pages/admin/AdminInventory.jsx";
 import AdminReviews from "./pages/admin/AdminReviews.jsx";
 import AdminService from "./pages/admin/AdminService.jsx";
 import AdminPayments from "./pages/admin/AdminPayments.jsx";
+import AdminQuoteRequests from "./pages/admin/AdminQuoteRequests.jsx";
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/admin/reviews" element={<AdminReviews />} />
           <Route path="/admin/payments" element={<AdminPayments />} />
           <Route path="/admin/service" element={<AdminService />} />
+          <Route path="/admin/quote-requests" element={<AdminQuoteRequests />} />
         </Route>
 
 
