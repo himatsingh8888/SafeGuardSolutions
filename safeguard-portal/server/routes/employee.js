@@ -10,7 +10,13 @@ import {
     getJobBreakdown,
     getSkillMatchedColleagues,
     cancelJob,
-    updateMyProfile
+    updateMyProfile,
+    addSkill,
+    removeSkill,
+    updateHours,
+    addServiceVisit,
+    updateServiceVisit,
+    deleteServiceVisit
 } from '../controllers/employeeController.js'
 
 dotenv.config()
@@ -35,12 +41,27 @@ function requireEmployee(req, res, next) {
     }
 }
 
+// Auth
 employeeRouter.post('/login', loginEmployee)
+
+// Profile & skills
 employeeRouter.get('/profile', requireEmployee, getMyProfile)
+employeeRouter.put('/update-profile', requireEmployee, updateMyProfile)
+employeeRouter.post('/add-skill', requireEmployee, addSkill)
+employeeRouter.delete('/remove-skill', requireEmployee, removeSkill)
+
+// Assignments
 employeeRouter.get('/assignments', requireEmployee, getMyAssignments)
+employeeRouter.put('/update-hours', requireEmployee, updateHours)
+employeeRouter.delete('/cancel-job/:installationid', requireEmployee, cancelJob)
+
+// Service visits
 employeeRouter.get('/service-visits', requireEmployee, getMyServiceVisits)
+employeeRouter.post('/add-service-visit', requireEmployee, addServiceVisit)
+employeeRouter.put('/update-service-visit', requireEmployee, updateServiceVisit)
+employeeRouter.delete('/delete-service-visit', requireEmployee, deleteServiceVisit)
+
+// Analytics
 employeeRouter.get('/stats', requireEmployee, getMyStats)
 employeeRouter.get('/job-breakdown', requireEmployee, getJobBreakdown)
 employeeRouter.get('/skill-matches', requireEmployee, getSkillMatchedColleagues)
-employeeRouter.delete('/cancel-job/:installationid', requireEmployee, cancelJob)
-employeeRouter.put('/update-profile', requireEmployee, updateMyProfile)
