@@ -1,25 +1,31 @@
 import pool from '../db/db.js'
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
 // Auth
 export async function loginEmployee(req, res) {
-    const { email, phone } = req.body
+    const { email, password } = req.body
 
-    if (!email || !phone) {
-        return res.status(400).json({ message: 'Email and phone are required' })
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' })
     }
 
     try {
         const result = await pool.query(
-            'SELECT * FROM public.employee WHERE email = $1 AND phonenum = $2',
-            [email.trim(), phone.trim()]
+            'SELECT * FROM public.employee WHERE email = $1',
+            [email.trim()]
         )
 
         const employee = result.rows[0]
-        if (!employee) {
+        if (!employee || !employee.password) {
+            return res.status(401).json({ message: 'Invalid credentials' })
+        }
+
+        const match = await bcrypt.compare(password, employee.password)
+        if (!match) {
             return res.status(401).json({ message: 'Invalid credentials' })
         }
 
@@ -36,7 +42,7 @@ export async function loginEmployee(req, res) {
     }
 }
 
-// JOIN: employee + employeeskill (LEFT JOIN to include employees with no skills)
+// JOIN: employee + employeeskill 
 export async function getMyProfile(req, res) {
     const employeeId = req.employeeId
 
@@ -62,7 +68,7 @@ export async function getMyProfile(req, res) {
     }
 }
 
-// JOIN: assignment + installation + location (3-table join)
+// JOIN: assignment + installation + location 
 export async function getMyAssignments(req, res) {
     const employeeId = req.employeeId
 
@@ -252,7 +258,7 @@ export async function addSkill(req, res) {
     }
 }
 
-// REMOVE SKILL: delete a specific skill row (employeeskill cascade-deleted if employee deleted)
+// REMOVE SKILL: delete a specific skill row (note: employeeskill cascade-deleted if employee deleted)
 export async function removeSkill(req, res) {
     const employeeId = req.employeeId
     const { skill } = req.body
@@ -301,7 +307,6 @@ export async function addServiceVisit(req, res) {
         return res.status(400).json({ message: 'installationid, visitdate, visittype, and outcomestatus are required' })
     }
     try {
-        // Confirm this employee is assigned to the installation
         const check = await pool.query(
             'SELECT 1 FROM public.assignment WHERE employeeid = $1 AND installationid = $2',
             [employeeId, installationid]
@@ -353,7 +358,7 @@ export async function updateServiceVisit(req, res) {
     }
 }
 
-// DELETE SERVICE VISIT: remove a visit (servicevisit is cascade-deleted if installation is deleted)
+// DELETE SERVICE VISIT: remove a visit (note: servicevisit is cascade-deleted if installation is deleted)
 export async function deleteServiceVisit(req, res) {
     const employeeId = req.employeeId
     const { visitnumber, installationid } = req.body

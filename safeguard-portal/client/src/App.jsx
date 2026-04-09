@@ -18,6 +18,7 @@ import AdminQuoteRequests from "./pages/admin/AdminQuoteRequests.jsx";
 import ProtectedRoutes from "./ProtectedRoutes.jsx";
 import EmployeeLogin from "./pages/employee/EmployeeLogin.jsx";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard.jsx";
+import ClientLogin from "./pages/client/ClientLogin.jsx";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/employee/login" element={<EmployeeLogin />} />
         <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+        <Route path="/client/login" element={<ClientLogin />} />
         <Route path="/client/dashboard" element={<ClientDashboard />} />
         <Route path="/tech/dashboard" element={<TechDashboard />} />
 

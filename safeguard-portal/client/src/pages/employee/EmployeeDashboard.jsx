@@ -38,6 +38,7 @@ export default function EmployeeDashboard() {
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState("");
   const [staleBanner, setStaleBanner] = useState("");
+  const [scrolled, setScrolled]       = useState(false);
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [pForm, setPForm]             = useState({ phonenum: "", skills: [] });
@@ -45,10 +46,6 @@ export default function EmployeeDashboard() {
   const [pMsg, setPMsg]               = useState("");
   const [newSkill, setNewSkill]       = useState("");
 
-  const [hoursModal, setHoursModal]   = useState(null);
-  const [hoursInput, setHoursInput]   = useState("");
-  const [hoursSaving, setHoursSaving] = useState(false);
-  const [hoursMsg, setHoursMsg]       = useState("");
 
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling]     = useState(false);
@@ -100,6 +97,12 @@ export default function EmployeeDashboard() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 30);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   function logout() { localStorage.clear(); navigate("/employee/login"); }
 
   function handleStale(msg = "Data was changed by another session. Refreshed — please review and try again.") {
@@ -150,28 +153,6 @@ export default function EmployeeDashboard() {
     setProfileOpen(false);
     await loadAll();
     setPSaving(false);
-  }
-
-  function openHours(a) {
-    setHoursModal(a);
-    setHoursInput(a.hoursworked != null ? String(a.hoursworked) : "");
-    setHoursMsg("");
-  }
-
-  async function saveHours(e) {
-    e.preventDefault();
-    setHoursSaving(true); setHoursMsg("");
-    try {
-      const res = await fetch(`${API_BASE}/api/employee/update-hours`, {
-        method: "PUT", headers: H,
-        body: JSON.stringify({ installationid: hoursModal.installationid, hoursworked: hoursInput }),
-      });
-      const d = await res.json();
-      if (res.ok)              { setHoursModal(null); await loadAll(); }
-      else if (res.status === 404) { setHoursModal(null); handleStale("Job not found — it may have been removed by another user."); }
-      else                     { setHoursMsg(d.message || "Failed to update hours."); }
-    } catch { setHoursMsg("Could not reach server."); }
-    finally  { setHoursSaving(false); }
   }
 
   async function confirmCancel() {
@@ -240,7 +221,7 @@ export default function EmployeeDashboard() {
 
   return (
     <div className="ed-shell">
-      <header className="ed-header">
+      <header className={`ed-header${scrolled ? " ed-header-scrolled" : ""}`}>
         <div className="ed-header-left">
           <span className="ed-brand">SafeGuard Solutions</span>
           <span className="ed-sep" />
@@ -355,12 +336,9 @@ export default function EmployeeDashboard() {
                             <td><span className={badge(a.status)}>{a.status}</span></td>
                             <td>{a.hoursworked != null ? `${a.hoursworked}h` : "—"}</td>
                             <td>
-                              <div className="ed-row-actions">
-                                <button className="ed-btn ed-btn-ghost" onClick={() => openHours(a)}>Edit Hours</button>
-                                {a.status === "Scheduled" && (
-                                  <button className="ed-btn ed-btn-danger" onClick={() => { setCancelTarget(a); setCancelMsg(""); }}>Cancel</button>
-                                )}
-                              </div>
+                              {a.status === "Scheduled" && (
+                                <button className="ed-btn ed-btn-danger" onClick={() => { setCancelTarget(a); setCancelMsg(""); }}>Cancel</button>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -494,42 +472,6 @@ export default function EmployeeDashboard() {
                 <button type="button" className="ed-btn ed-btn-ghost" onClick={() => setProfileOpen(false)}>Cancel</button>
                 <button type="submit" className="ed-btn ed-btn-primary" disabled={pSaving}>
                   {pSaving ? "Saving…" : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {hoursModal && (
-        <div className="ed-overlay" onClick={e => e.target === e.currentTarget && setHoursModal(null)}>
-          <div className="ed-modal ed-modal-sm">
-            <div className="ed-modal-head">
-              <span>Edit Hours — Job #{hoursModal.installationid}</span>
-              <button className="ed-modal-x" onClick={() => setHoursModal(null)}>×</button>
-            </div>
-            <form onSubmit={saveHours}>
-              <div className="ed-modal-body">
-                <p className="ed-modal-ctx">{hoursModal.siteaddress} · {fmt(hoursModal.scheduleddate)}</p>
-                <div className="ed-field">
-                  <label className="ed-label">Hours Worked</label>
-                  <input
-                    className="ed-input"
-                    type="number"
-                    min="0"
-                    step="0.25"
-                    value={hoursInput}
-                    onChange={e => setHoursInput(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                </div>
-                {hoursMsg && <p className="ed-form-err">{hoursMsg}</p>}
-              </div>
-              <div className="ed-modal-foot">
-                <button type="button" className="ed-btn ed-btn-ghost" onClick={() => setHoursModal(null)}>Cancel</button>
-                <button type="submit" className="ed-btn ed-btn-primary" disabled={hoursSaving}>
-                  {hoursSaving ? "Saving…" : "Save"}
                 </button>
               </div>
             </form>

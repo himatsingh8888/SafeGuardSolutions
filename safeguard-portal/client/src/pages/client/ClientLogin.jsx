@@ -3,7 +3,7 @@ import { useState } from "react";
 import { API_BASE } from "../../config/apiBase.js";
 import "../Login.css";
 
-export default function EmployeeLogin() {
+export default function ClientLogin() {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
@@ -12,14 +12,14 @@ export default function EmployeeLogin() {
     setError("");
 
     const formData = new FormData(e.target);
-    const email = formData.get("email");
+    const username = formData.get("username");
     const password = formData.get("password");
 
     try {
-      const res = await fetch(`${API_BASE}/api/employee/login`, {
+      const res = await fetch(`${API_BASE}/api/client-auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       let data = {};
@@ -34,9 +34,9 @@ export default function EmployeeLogin() {
       }
 
       if (res.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("employeeId", String(data.employeeId));
-        navigate("/employee/dashboard");
+        localStorage.setItem("clientToken", data.token);
+        localStorage.setItem("clientId", String(data.clientId));
+        navigate("/client/dashboard");
       } else {
         setError(data.message || `Login failed (${res.status})`);
       }
@@ -51,18 +51,18 @@ export default function EmployeeLogin() {
         <button type="button" className="back-btn" onClick={() => navigate("/")}>
           &#8592; Back
         </button>
-        <h1>Employee Sign In</h1>
-        <p>Access your work dashboard</p>
+        <h1>Client Sign In</h1>
+        <p>Access your client portal</p>
         <div className="input-box">
-          <h4>WORK EMAIL</h4>
-          <input type="email" name="email" placeholder="you@company.com" required />
+          <h4>USERNAME</h4>
+          <input type="text" name="username" placeholder="your username" required />
         </div>
         <div className="input-box">
           <h4>PASSWORD</h4>
           <input type="password" name="password" placeholder="Enter your password" required />
         </div>
         <button type="submit" className="login-btn">
-          ACCESS DASHBOARD
+          ACCESS PORTAL
         </button>
         {error && (
           <p style={{ color: "#b00020", fontSize: 14, marginTop: 12 }}>{error}</p>
