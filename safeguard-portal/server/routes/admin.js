@@ -3,13 +3,14 @@ import {
     deleteEmployee, getEmployees, addEmployee, updateEmployee,
     addInventory, deleteInventory, updateInventory, getInventory,
     updateQuoteRequest, deleteQuoteRequest,
-    getClients, addClient, deleteClient, updateClient
+    getClients, addClient, deleteClient, updateClient, getReviews
 } from '../controllers/adminController.js';
 
 
 
 export const adminRouter = express.Router();
 
+adminRouter.get('/getReviews', getReviews)
 //Employee Routes
 adminRouter.get('/getEmployees', getEmployees)
 adminRouter.post('/addEmployee', addEmployee)
