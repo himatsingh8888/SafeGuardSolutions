@@ -32,6 +32,33 @@ CREATE TABLE public.users (
 );
 CREATE UNIQUE INDEX one_admin ON public.users ((role)) WHERE role = 'admin';
 
+CREATE TABLE employee_audit (
+    auditid SERIAL PRIMARY KEY,
+    employeeid INT,
+    old_wage NUMERIC,
+    new_wage NUMERIC,
+    old_email VARCHAR(100),
+    new_email VARCHAR(100),
+    old_phone VARCHAR(15),
+    new_phone VARCHAR(15),
+    action_time TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE FUNCTION log_employee_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO employee_audit (employeeid, old_wage, new_wage, old_email, new_email, old_phone, new_phone)
+    VALUES (OLD.employeeid, OLD.wage, NEW.wage, OLD.email, NEW.email, OLD.phonenum, NEW.phonenum);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER employee_update_trigger
+AFTER UPDATE ON employee
+FOR EACH ROW
+EXECUTE FUNCTION log_employee_update();
+
 CREATE TABLE public.system (
     systemid integer NOT NULL,
     status character varying(100) NOT NULL,
