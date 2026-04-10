@@ -256,5 +256,25 @@ export async function deleteClient(req, res) {
     }
 }
 
+export async function updateClient(req, res) {
+    try {
+        const { firstName, lastName, email, phone, billingaddress, customertype, clientid } = req.body
+
+        const result = await pool.query(
+            'UPDATE client SET fname=$1, lname=$2, email=$3, phone=$4, billingaddress=$5, customertype=$6 WHERE clientid=$7 RETURNING *',
+            [firstName, lastName, email, phone, billingaddress, customertype, clientid]
+        )
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Client not found' })
+        }
+
+        res.json({ message: 'Client updated successfully', client: result.rows[0] })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to update client' })
+    }
+}
+
 
 

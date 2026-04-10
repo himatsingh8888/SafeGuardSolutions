@@ -10,6 +10,8 @@ export default function AdminClients() {
     const [filterType, setFilterType] = useState("All");
     const [refresh, setRefresh] = useState(0);
     const [showModal, setShowModal] = useState(false);
+    const [modalMode, setModalMode] = useState(null)
+    const [selectedClient, setSelectedClient] = useState(null)
 
     useEffect(() => {
         fetchClients();
@@ -88,6 +90,40 @@ export default function AdminClients() {
         }
     }
 
+    async function updateClient(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target)
+
+        const firstName = formData.get("firstName")
+        const lastName = formData.get("lastName")
+        const email = formData.get("email")
+        const phone = formData.get("phone")
+        const billingaddress = formData.get("billingaddress")
+        const customertype = formData.get("customertype")
+        const clientid = selectedClient.clientid
+
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/updateClient`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ firstName, lastName, email, phone, billingaddress, customertype, clientid })
+            })
+            const data = await res.json()
+
+            if (res.ok) {
+                setRefresh(prev => prev + 1)
+                setShowModal(false)
+            } else {
+                console.log(data.message)
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     const filtered = clients.filter((c) => {
         const fullName = `${c.fname} ${c.lname}`.toLowerCase();
         const matchSearch =
@@ -105,46 +141,48 @@ export default function AdminClients() {
         setExpanded((prev) => (prev === id ? null : id));
     }
 
+
+
     return (
         <div>
             {showModal && (
                 <div className='overlay'>
                     <div className='modal'>
                         <div className='add-header'>
-                            <h1>Add Client</h1>
+                            <h1>{modalMode === 'edit' ? 'Edit Client' : 'Add Client'}</h1>
                             <button onClick={() => setShowModal(false)}>x</button>
                         </div>
-                        <form onSubmit={handleAddClient}>
+                        <form onSubmit={modalMode === 'edit' ? updateClient : handleAddClient}>
                             <div className='name-fields'>
                                 <div>
                                     <h3>FIRST NAME</h3>
-                                    <input type="text" name="firstName" placeholder="eg. Alice" required />
+                                    <input type="text" name="firstName" placeholder="eg. Alice" defaultValue={modalMode === 'edit' ? selectedClient?.fname : ''} required />
                                 </div>
                                 <div>
                                     <h3>LAST NAME</h3>
-                                    <input type="text" name="lastName" placeholder="eg. Wong" required />
+                                    <input type="text" name="lastName" placeholder="eg. Wong" defaultValue={modalMode === 'edit' ? selectedClient?.lname : ''} required />
                                 </div>
                             </div>
                             <h3>EMAIL</h3>
-                            <input className='email-input' type="text" name="email" placeholder="eg. alice@wong.com" required />
+                            <input className='email-input' type="text" name="email" placeholder="eg. alice@wong.com" defaultValue={modalMode === 'edit' ? selectedClient?.email : ''} required />
                             <div className='phoneNwage'>
                                 <div>
                                     <h3>PHONE</h3>
-                                    <input type="text" name="phone" placeholder="eg. 6041234567" required />
+                                    <input type="text" name="phone" placeholder="eg. 6041234567" defaultValue={modalMode === 'edit' ? selectedClient?.phone : ''} required />
                                 </div>
                                 <div>
                                     <h3>TYPE</h3>
-                                    <select name="customertype" required>
+                                    <select name="customertype" defaultValue={modalMode === 'edit' ? selectedClient?.customertype : 'Residential'} required>
                                         <option value="Residential">Residential</option>
                                         <option value="Commercial">Commercial</option>
                                     </select>
                                 </div>
                             </div>
                             <h3>BILLING ADDRESS</h3>
-                            <input className='email-input' type="text" name="billingaddress" placeholder="eg. 123 Main St" />
+                            <input className='email-input' type="text" name="billingaddress" placeholder="eg. 123 Main St" defaultValue={modalMode === 'edit' ? selectedClient?.billingaddress : ''} />
                             <div className='form-buttons'>
                                 <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit">Add Client</button>
+                                <button type="submit">{modalMode === 'edit' ? 'Edit Client' : 'Add Client'}</button>
                             </div>
                         </form>
                     </div>
@@ -246,7 +284,11 @@ export default function AdminClients() {
                                                     </div>
                                                 </div>
                                                 <div className="clients-card-actions">
-                                                    <button className="clients-btn-edit">Edit</button>
+                                                    <button className="clients-btn-edit" onClick={() => {
+                                                        setModalMode('edit');
+                                                        setShowModal(true);
+                                                        setSelectedClient(client);
+                                                    }}>Edit</button>
                                                     <button onClick={() => deleteClient(client.clientid)} className="clients-btn-delete">Delete</button>
                                                 </div>
                                             </div>
