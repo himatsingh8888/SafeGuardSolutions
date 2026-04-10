@@ -9,6 +9,7 @@ export default function AdminEmployees() {
     const [refresh, setRefresh] = React.useState(0)
     const [modalMode, setModalMode] = React.useState(null)
     const [selectedEmployee, setSelectedEmployee] = React.useState(null)
+    const [viewMode, setViewMode] = React.useState('all')
 
     const skills = ['Camera Installation', 'Alarm Systems', 'Access Control', 'Network Setup']
 
@@ -172,6 +173,22 @@ export default function AdminEmployees() {
         }
     }
 
+    async function fetchAllSkillEmployees() {
+        try {
+            const res = await fetch(`${API_BASE}/api/admin/employeesAllSkills`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            const data = await res.json()
+            setEmployees(data)
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
 
     return (
         <div>
@@ -232,6 +249,17 @@ export default function AdminEmployees() {
                         <h2>Employees</h2>
                         <p>Manage your team members</p>
                     </div>
+                    <button onClick={() => {
+                        if (viewMode === 'allSkills') {
+                            setViewMode('all')
+                            setRefresh(prev => prev + 1)
+                        } else {
+                            setViewMode('allSkills')
+                            fetchAllSkillEmployees()
+                        }
+                    }}>
+                        {viewMode === 'allSkills' ? 'Show All Employees' : 'Show All Skills'}
+                    </button>
                     <button onClick={() => { setShowModal(true); setModalMode('add') }}>+Add Employee</button>
                 </div>
                 <div className='Employees'>

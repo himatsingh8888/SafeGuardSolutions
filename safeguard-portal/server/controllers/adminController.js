@@ -300,5 +300,35 @@ export async function updateClient(req, res) {
     }
 }
 
+export async function getEmployeesAllSkills(req, res) {
+    try {
+        const result = await pool.query(`
+            SELECT e.employeeid, e.fname, e.lname, e.wage, e.email, e.phonenum,
+                ARRAY_AGG(es.skill) AS skills
+            FROM employee e
+            JOIN employeeskill es ON e.employeeid = es.employeeid
+            WHERE NOT EXISTS (
+                SELECT skill FROM (VALUES 
+                    ('Camera Installation'), 
+                    ('Alarm Systems'), 
+                    ('Access Control'), 
+                    ('Network Setup')
+                ) AS required_skills(skill)
+                EXCEPT
+                SELECT skill FROM employeeskill WHERE employeeid = e.employeeid
+            )
+            GROUP BY e.employeeid, e.fname, e.lname, e.wage, e.email, e.phonenum
+        `)
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'No employees with all skills found' })
+        }
+
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to fetch employees' })
+    }
+}
 
 
