@@ -220,4 +220,41 @@ export async function getClients(req, res) {
     }
 }
 
+export async function addClient(req, res) {
+    try {
+        const { firstName, lastName, email, phone, billingaddress, customertype } = req.body
+
+        const result = await pool.query(
+            'INSERT INTO client (fname, lname, email, phone, billingaddress, customertype) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [firstName, lastName, email, phone, billingaddress, customertype]
+        )
+
+        res.status(201).json({ message: 'Client added successfully', client: result.rows[0] })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to add client' })
+    }
+}
+
+export async function deleteClient(req, res) {
+    try {
+        const { clientid } = req.body
+
+        const result = await pool.query(
+            'DELETE FROM client WHERE clientid = $1 RETURNING *',
+            [clientid]
+        )
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Client not found' })
+        }
+
+        res.json({ message: 'Client deleted successfully' })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to delete client' })
+    }
+}
+
+
 

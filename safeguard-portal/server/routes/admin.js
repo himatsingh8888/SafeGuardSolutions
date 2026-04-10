@@ -3,7 +3,7 @@ import {
     deleteEmployee, getEmployees, addEmployee, updateEmployee,
     addInventory, deleteInventory, updateInventory, getInventory,
     updateQuoteRequest, deleteQuoteRequest,
-    getClients
+    getClients, addClient, deleteClient
 } from '../controllers/adminController.js';
 
 
@@ -28,6 +28,8 @@ adminRouter.delete('/deleteQuoteRequest', deleteQuoteRequest)
 
 //Client Routes
 adminRouter.get('/getClients', getClients)
+adminRouter.post('/addClient', addClient)
+adminRouter.delete('/deleteClient', deleteClient)
 
 
 
