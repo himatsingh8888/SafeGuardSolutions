@@ -49,6 +49,17 @@ function statusBadgeClass(status) {
   return "cd-badge-pending";
 }
 
+function formatReviewDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function ClientDashboard() {
   const navigate = useNavigate();
 

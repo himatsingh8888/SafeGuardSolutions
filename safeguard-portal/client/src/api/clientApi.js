@@ -25,7 +25,9 @@ async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const message =
-      typeof data === "object" && data?.message ? data.message : `Request failed (${res.status})`;
+      typeof data === "object" && data && (data.message || data.error)
+        ? data.message || data.error
+        : `Request failed (${res.status})`;
     const err = new Error(message);
     err.status = res.status;
     err.body = data;
@@ -87,7 +89,23 @@ export function normalizePayment(raw) {
   };
 }
 
+export function normalizeReview(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const id = raw.reviewId ?? raw.reviewid ?? "";
+  return {
+    id: id !== undefined && id !== null ? String(id) : "",
+    reviewName: String(raw.reviewName ?? raw.reviewname ?? ""),
+    rating: Number(raw.rating ?? 0),
+    reviewComment: String(raw.reviewComment ?? raw.reviewcomment ?? ""),
+    reviewDate: raw.reviewDate ?? raw.reviewdate ?? "",
+  };
+}
 
+/**
+ * Which client row to load for /client/dashboard.
+ * In dev, `VITE_DEV_CLIENT_ID` in client/.env wins over localStorage so a stale
+ * clientId from an old login (e.g. 1 = seeded "John" data) does not override your .env.
+ */
 export function getStoredClientId() {
   const devId = import.meta.env.VITE_DEV_CLIENT_ID;
   if (import.meta.env.DEV && devId !== undefined && devId !== null && String(devId).trim() !== "") {
@@ -142,6 +160,24 @@ export async function fetchPayments(clientId) {
   const data = await apiFetch(`/api/client/${encodeURIComponent(clientId)}/payments`);
   if (!Array.isArray(data)) return [];
   return data.map(normalizePayment).filter(Boolean);
+}
+
+export async function fetchClientReviews(clientId) {
+  const data = await apiFetch(`/api/client/${encodeURIComponent(clientId)}/reviews`);
+  if (!Array.isArray(data)) return [];
+  return data.map(normalizeReview).filter(Boolean);
+}
+
+export async function submitClientReview(clientId, { reviewName, rating, reviewComment }) {
+  const data = await apiFetch(`/api/client/${encodeURIComponent(clientId)}/reviews`, {
+    method: "POST",
+    body: JSON.stringify({
+      reviewName,
+      rating: Number(rating),
+      reviewComment: reviewComment ?? "",
+    }),
+  });
+  return normalizeReview(data);
 }
 
 export function statusToProgress(status) {

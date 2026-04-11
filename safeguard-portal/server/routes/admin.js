@@ -3,13 +3,14 @@ import {
     deleteEmployee, getEmployees, addEmployee, updateEmployee,
     addInventory, deleteInventory, updateInventory, getInventory,
     updateQuoteRequest, deleteQuoteRequest,
-    getClients
+    getClients, addClient, deleteClient, updateClient, getReviews, getEmployeesAllSkills
 } from '../controllers/adminController.js';
 
 
 
 export const adminRouter = express.Router();
 
+adminRouter.get('/getReviews', getReviews)
 //Employee Routes
 adminRouter.get('/getEmployees', getEmployees)
 adminRouter.post('/addEmployee', addEmployee)
@@ -28,6 +29,10 @@ adminRouter.delete('/deleteQuoteRequest', deleteQuoteRequest)
 
 //Client Routes
 adminRouter.get('/getClients', getClients)
+adminRouter.post('/addClient', addClient)
+adminRouter.put('/updateClient', updateClient)
+adminRouter.delete('/deleteClient', deleteClient)
+adminRouter.get('/employeesAllSkills', getEmployeesAllSkills)
 
 
 

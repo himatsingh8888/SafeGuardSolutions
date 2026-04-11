@@ -269,6 +269,105 @@ export const getInstallationDetail = async (req, res) => {
   }
 };
 
+// GET /api/client/:clientID/reviews
+export const getClientReviews = async (req, res) => {
+  const { clientID } = req.params;
+
+  try {
+    const clientCheck = await pool.query(
+      'SELECT 1 FROM client WHERE clientid = $1',
+      [clientID]
+    );
+    if (clientCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    const result = await pool.query(
+      `SELECT reviewid,
+              reviewcomment,
+              reviewname,
+              rating,
+              reviewdate
+       FROM   reviews
+       WHERE  client = $1
+       ORDER  BY reviewdate DESC, reviewid DESC`,
+      [clientID]
+    );
+
+    res.json(
+      result.rows.map((r) => ({
+        reviewId: r.reviewid,
+        reviewComment: r.reviewcomment,
+        reviewName: r.reviewname,
+        rating: r.rating,
+        reviewDate: r.reviewdate,
+      }))
+    );
+  } catch (err) {
+    console.error('getClientReviews error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// POST /api/client/:clientID/reviews
+export const createClientReview = async (req, res) => {
+  const { clientID } = req.params;
+  const { reviewName, rating, reviewComment } = req.body ?? {};
+
+  const nameTrim = typeof reviewName === 'string' ? reviewName.trim() : '';
+  if (!nameTrim) {
+    return res.status(400).json({ message: 'Review name is required' });
+  }
+  if (nameTrim.length > 100) {
+    return res.status(400).json({ message: 'Review name must be at most 100 characters' });
+  }
+
+  const ratingNum =
+    typeof rating === 'string' ? parseInt(rating, 10) : Number(rating);
+  if (
+    !Number.isInteger(ratingNum) ||
+    ratingNum < 0 ||
+    ratingNum > 5
+  ) {
+    return res
+      .status(400)
+      .json({ message: 'Rating must be an integer between 0 and 5' });
+  }
+
+  const comment =
+    typeof reviewComment === 'string' ? reviewComment.trim() : '';
+
+  try {
+    const clientCheck = await pool.query(
+      'SELECT 1 FROM client WHERE clientid = $1',
+      [clientID]
+    );
+    if (clientCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Client not found' });
+    }
+
+    const insert = await pool.query(
+      `INSERT INTO reviews (reviewcomment, reviewname, rating, reviewdate, client)
+       VALUES ($1, $2, $3, CURRENT_DATE, $4)
+       RETURNING reviewid, reviewcomment, reviewname, rating, reviewdate, client`,
+      [comment || null, nameTrim, ratingNum, clientID]
+    );
+
+    const r = insert.rows[0];
+    res.status(201).json({
+      reviewId: r.reviewid,
+      reviewComment: r.reviewcomment,
+      reviewName: r.reviewname,
+      rating: r.rating,
+      reviewDate: r.reviewdate,
+      clientId: r.client,
+    });
+  } catch (err) {
+    console.error('createClientReview error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // GET /api/client/:clientID/payments 
 export const getClientPayments = async (req, res) => {
   const { clientID } = req.params;
