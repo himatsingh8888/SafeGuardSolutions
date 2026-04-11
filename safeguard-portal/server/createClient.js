@@ -1,15 +1,7 @@
 import bcrypt from "bcrypt";
 import pool from "./db/db.js";
 
-// Edit before running: node createClient.js
-// Requires server/.env with DB_* set (same as createAdmin.js).
-//
-// Creates TWO rows:
-// 1) public.client — this is what GET /api/client/:clientID shows on the dashboard
-// 2) public.users — this is what /api/auth/login checks (role = client)
-//
-// After running, set VITE_DEV_CLIENT_ID in client/.env to the printed client ID
-// (or add users.clientid + login response later so it’s automatic).
+
 
 const username = "client_test4";
 const password = "yourpasswordhere";
