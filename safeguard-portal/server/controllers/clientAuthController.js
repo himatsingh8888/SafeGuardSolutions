@@ -67,11 +67,17 @@ export async function getMyProfile(req, res) {
     }
 }
 
+function normStr(v) {
+    return String(v ?? '').trim()
+}
+
 // PUT /api/client-auth/profile
 // UPDATE: fname, lname, email, billingaddress, phone
+// Optional body.expected = { fname, lname, email, billingaddress, phone } — if present and DB row
+// differs, respond 409 so the client can refresh (same idea as employee stale flows).
 export async function updateMyProfile(req, res) {
     const clientId = req.clientId
-    const { fname, lname, email, billingaddress, phone } = req.body
+    const { fname, lname, email, billingaddress, phone, expected } = req.body
     if (!fname && !lname && !email && !billingaddress && !phone) {
         return res.status(400).json({ message: 'At least one field is required' })
     }
@@ -79,6 +85,24 @@ export async function updateMyProfile(req, res) {
         return res.status(400).json({ message: 'Invalid email address' })
     }
     try {
+        if (expected && typeof expected === 'object') {
+            const cur = await pool.query(
+                `SELECT fname, lname, email, billingaddress, phone FROM public.client WHERE clientid = $1`,
+                [clientId]
+            )
+            if (!cur.rows.length) return res.status(404).json({ message: 'Client not found' })
+            const row = cur.rows[0]
+            const fields = ['fname', 'lname', 'email', 'billingaddress', 'phone']
+            for (const f of fields) {
+                if (normStr(row[f]) !== normStr(expected[f])) {
+                    return res.status(409).json({
+                        message:
+                            'Your profile was changed elsewhere. Please review the updated data and try again.',
+                    })
+                }
+            }
+        }
+
         const result = await pool.query(
             `UPDATE public.client
              SET fname          = COALESCE($1, fname),
@@ -218,7 +242,6 @@ export async function getPaymentBreakdown(req, res) {
     }
 }
 
-//not using this anymore useless, but prob dont delete in case smth breaks.
 // GET /api/client-auth/similar-clients
 // DIVISION: find other clients who have had ALL the same service visit types as the logged-in client
 export async function getSimilarClients(req, res) {

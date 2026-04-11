@@ -118,20 +118,24 @@ export default function ClientDashboard() {
 
 
 
-  // Profile edit modal 
+  // Profile edit modal
   const [profileModal, setProfileModal] = useState(false);
   const [profileDraft, setProfileDraft] = useState({ fname: "", lname: "", email: "", billingaddress: "", phone: "" });
+  /** Snapshot when modal opens — server rejects save if row no longer matches (409). */
+  const [profileBaseline, setProfileBaseline] = useState(null);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileErr, setProfileErr] = useState("");
 
   function openProfileModal() {
-    setProfileDraft({
+    const base = {
       fname: profile?.fname || "",
       lname: profile?.lname || "",
       email: profile?.email || "",
       billingaddress: profile?.billingaddress || "",
       phone: profile?.phone || "",
-    });
+    };
+    setProfileBaseline(base);
+    setProfileDraft(base);
     setProfileErr("");
     setProfileModal(true);
   }
@@ -149,12 +153,20 @@ export default function ClientDashboard() {
           email: profileDraft.email || undefined,
           billingaddress: profileDraft.billingaddress || undefined,
           phone: profileDraft.phone || undefined,
+          expected: profileBaseline || undefined,
         }),
       });
       setProfileModal(false);
+      setProfileBaseline(null);
       await loadAll();
     } catch (err) {
-      setProfileErr(err.message);
+      if (err.status === 409) {
+        setProfileModal(false);
+        setProfileBaseline(null);
+        handleStale(err.message || "Profile was updated elsewhere.");
+      } else {
+        setProfileErr(err.message);
+      }
     } finally {
       setProfileSaving(false);
     }

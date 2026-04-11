@@ -1,6 +1,15 @@
+/**
+ * Integration tests for /api/employee (requires running server + DB).
+ *
+ * Login uses email + password (see employeeController.loginEmployee).
+ * Defaults: TEST_EMPLOYEE_EMAIL=bob@company.com, TEST_EMPLOYEE_PASSWORD=Employee@123
+ * Override via env if your DB differs.
+ */
 import pool from '../server/db/db.js'
 
-const BASE = 'http://localhost:5001/api/employee'
+const BASE = process.env.TEST_API_BASE || 'http://localhost:5001/api/employee'
+const TEST_LOGIN_EMAIL = process.env.TEST_EMPLOYEE_EMAIL || 'bob@company.com'
+const TEST_LOGIN_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'Employee@123'
 let TOKEN = ''
 let EMPLOYEE_ID = null
 let TEST_INSTALLATION_ID = null
@@ -34,10 +43,16 @@ async function req(method, path, body, useToken = true) {
   return { status: res.status, ok: res.ok, data }
 }
 
-section('Setup — find a real employee')
-const empRow = await pool.query(`
-  SELECT employeeid, email, phonenum, fname, lname FROM public.employee LIMIT 1
-`)
+section('Setup — resolve employee for tests')
+let empRow = await pool.query(
+  `SELECT employeeid, email, phonenum, fname, lname FROM public.employee WHERE email = $1`,
+  [TEST_LOGIN_EMAIL]
+)
+if (empRow.rows.length === 0) {
+  empRow = await pool.query(`
+    SELECT employeeid, email, phonenum, fname, lname FROM public.employee LIMIT 1
+  `)
+}
 if (empRow.rows.length === 0) {
   console.log(`${c.red}No employees in DB.${c.reset}`)
   process.exit(1)
@@ -48,10 +63,10 @@ EMPLOYEE_ID = emp.employeeid
 
 section('POST /login')
 {
-  const bad = await req('POST', '/login', { email: 'bad@bad.com', phone: '000' }, false)
+  const bad = await req('POST', '/login', { email: 'bad@bad.com', password: 'wrong' }, false)
   bad.status === 401 ? ok('rejects bad credentials', `status=${bad.status}`) : fail('should reject bad credentials', `got ${bad.status}`)
 
-  const good = await req('POST', '/login', { email: emp.email, phone: emp.phonenum }, false)
+  const good = await req('POST', '/login', { email: emp.email, password: TEST_LOGIN_PASSWORD }, false)
   if (good.ok && good.data.token) {
     TOKEN = good.data.token
     ok('login with real employee', 'token received')

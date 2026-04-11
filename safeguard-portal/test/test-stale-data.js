@@ -1,6 +1,11 @@
+/**
+ * Manual / semi-manual stale-UI scenarios (stdin pauses). Fix login payload if needed.
+ * Scenario A INSERT must match your installation table columns (see schema_fixed2.sql).
+ */
 import pool from '../server/db/db.js'
 
 const BASE = 'http://localhost:5001/api/employee'
+const TEST_PASSWORD = process.env.TEST_EMPLOYEE_PASSWORD || 'Employee@123'
 
 const c = {
   reset: '\x1b[0m', green: '\x1b[32m', cyan: '\x1b[36m',
@@ -34,7 +39,7 @@ step(`Employee: ${emp.fname} ${emp.lname} (id=${emp.employeeid})`)
 const loginRes = await fetch(`${BASE}/login`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: emp.email, phone: emp.phonenum }),
+  body: JSON.stringify({ email: emp.email, password: TEST_PASSWORD }),
 })
 const loginData = await loginRes.json()
 if (!loginRes.ok || !loginData.token) {
@@ -46,17 +51,21 @@ ok('Logged in')
 hdr('Scenario A — Edit Hours on a deleted job')
 sep()
 
-const loc    = await pool.query(`SELECT siteid FROM public.location LIMIT 1`)
-const client = await pool.query(`SELECT clientid FROM public.client LIMIT 1`)
+const loc = await pool.query(`SELECT siteid FROM public.location LIMIT 1`)
 
-if (!loc.rows.length || !client.rows.length) {
-  console.log(`  ${c.yellow}No location/client data — skipping Scenario A${c.reset}`)
+if (!loc.rows.length) {
+  console.log(`  ${c.yellow}No location row — skipping Scenario A${c.reset}`)
 } else {
-  const instRes = await pool.query(`
-    INSERT INTO public.installation (siteid, clientid, scheduleddate, status, description, price, techniciannumbs)
-    VALUES ($1, $2, CURRENT_DATE + 7, 'Scheduled', 'STALE TEST — safe to delete', 0, 1)
+  const instRes = await pool.query(
+    `
+    INSERT INTO public.installation (
+      siteid, scheduleddate, internalcost, price, techniciannumbs, description, status, completeddate
+    )
+    VALUES ($1, CURRENT_DATE + 7, 0, 0, 1, 'STALE TEST — safe to delete', 'Scheduled', NULL)
     RETURNING installationid
-  `, [loc.rows[0].siteid, client.rows[0].clientid])
+    `,
+    [loc.rows[0].siteid]
+  )
   const tempId = instRes.rows[0].installationid
 
   await pool.query(
