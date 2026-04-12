@@ -76,6 +76,7 @@ export default function ClientDashboard() {
   const [paymentSummary, setPaymentSummary] = useState(null);
   const [paymentBreakdown, setPaymentBreakdown] = useState([]);
   const [similarClients, setSimilarClients] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorBanner, setErrorBanner] = useState("");
   const [staleBanner, setStaleBanner] = useState("");
@@ -84,13 +85,14 @@ export default function ClientDashboard() {
     setLoading(true);
     setErrorBanner("");
     try {
-      const [prof, inst, pays, summary, breakdown, similar] = await Promise.all([
+      const [prof, inst, pays, summary, breakdown, similar, revs] = await Promise.all([
         apiFetch("/api/client-auth/me"),
         apiFetch("/api/client-auth/installations"),
         apiFetch("/api/client-auth/payments"),
         apiFetch("/api/client-auth/payment-summary"),
         apiFetch("/api/client-auth/payment-breakdown"),
         apiFetch("/api/client-auth/similar-clients"),
+        apiFetch("/api/client-auth/reviews"),
       ]);
       setProfile(prof);
       setInstallations(inst);
@@ -98,6 +100,7 @@ export default function ClientDashboard() {
       setPaymentSummary(summary);
       setPaymentBreakdown(breakdown);
       setSimilarClients(similar);
+      setReviews(revs);
     } catch (err) {
       if (err.status === 401 || err.status === 403) {
         localStorage.removeItem(TOKEN_KEY);
@@ -183,7 +186,38 @@ export default function ClientDashboard() {
     }
   }
 
-  // Cancel installation modal 
+  // Review modal
+  const [reviewModal, setReviewModal] = useState(false);
+  const [reviewDraft, setReviewDraft] = useState({ reviewName: "", rating: "5", reviewComment: "" });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewErr, setReviewErr] = useState("");
+
+  function openReviewModal() {
+    setReviewDraft({ reviewName: profile ? `${profile.fname} ${profile.lname}`.trim() : "", rating: "5", reviewComment: "" });
+    setReviewErr("");
+    setReviewModal(true);
+  }
+
+  async function saveReview(e) {
+    e.preventDefault();
+    setReviewErr("");
+    setReviewSubmitting(true);
+    try {
+      await apiFetch("/api/client-auth/reviews", {
+        method: "POST",
+        body: JSON.stringify({ reviewName: reviewDraft.reviewName, rating: parseInt(reviewDraft.rating, 10), reviewComment: reviewDraft.reviewComment }),
+      });
+      setReviewModal(false);
+      const revs = await apiFetch("/api/client-auth/reviews");
+      setReviews(revs);
+    } catch (err) {
+      setReviewErr(err.message);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
+  // Cancel installation modal
   const [cancelModal, setCancelModal] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelErr, setCancelErr] = useState("");
@@ -465,7 +499,52 @@ export default function ClientDashboard() {
           )}
         </div>
 
-      
+        {/* Similar Clients (Division) */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">Clients with Matching Service Experience</span>
+          </div>
+          {similarClients.length === 0 ? (
+            <div className="cd-card"><span className="cd-muted">No clients found with the same range of service visit types.</span></div>
+          ) : (
+            <div className="cd-peers">
+              {similarClients.map(c => (
+                <div key={c.clientid} className="cd-peer">
+                  <div className="cd-peer-name">{c.fname} {c.lname}</div>
+                  <div className="cd-tags" style={{ marginTop: 6 }}>
+                    {(c.shared_types || []).map(t => <span key={t} className="cd-tag">{t}</span>)}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>{fmt(c.customertype)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reviews */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">My Reviews</span>
+            <button className="cd-btn cd-btn-ghost" onClick={openReviewModal}>+ Write a Review</button>
+          </div>
+          {reviews.length === 0 ? (
+            <div className="cd-card"><span className="cd-muted">No reviews yet. Share your experience!</span></div>
+          ) : (
+            <div className="cd-reviews">
+              {reviews.map(r => (
+                <div key={r.reviewid} className="cd-review-card">
+                  <div className="cd-review-top">
+                    <span className="cd-review-name">{r.reviewname}</span>
+                    <span className="cd-review-stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                    <span className="cd-review-date">{fmtDate(r.reviewdate)}</span>
+                  </div>
+                  {r.reviewcomment && <p className="cd-review-comment">{r.reviewcomment}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </main>
 
       {/* Profile Edit Modal */}
@@ -511,6 +590,50 @@ export default function ClientDashboard() {
                 <button type="button" className="cd-btn cd-btn-ghost" onClick={() => setProfileModal(false)} disabled={profileSaving}>Cancel</button>
                 <button type="submit" className="cd-btn cd-btn-primary" disabled={profileSaving}>
                   {profileSaving ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewModal && (
+        <div className="cd-overlay" onClick={e => { if (e.target === e.currentTarget) setReviewModal(false); }}>
+          <div className="cd-modal">
+            <div className="cd-modal-head">
+              Write a Review
+              <button className="cd-modal-x" onClick={() => setReviewModal(false)}>×</button>
+            </div>
+            <form onSubmit={saveReview}>
+              <div className="cd-modal-body">
+                <div className="cd-field">
+                  <label className="cd-label">Your Name</label>
+                  <input className="cd-input" required value={reviewDraft.reviewName}
+                    onChange={e => setReviewDraft(d => ({ ...d, reviewName: e.target.value }))}
+                    placeholder="Name shown with review" />
+                </div>
+                <div className="cd-field">
+                  <label className="cd-label">Rating (0–5)</label>
+                  <select className="cd-input" value={reviewDraft.rating}
+                    onChange={e => setReviewDraft(d => ({ ...d, rating: e.target.value }))}>
+                    {[5,4,3,2,1,0].map(n => (
+                      <option key={n} value={n}>{"★".repeat(n)}{"☆".repeat(5-n)} ({n})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="cd-field">
+                  <label className="cd-label">Comment (optional)</label>
+                  <textarea className="cd-input cd-textarea" rows={4} value={reviewDraft.reviewComment}
+                    onChange={e => setReviewDraft(d => ({ ...d, reviewComment: e.target.value }))}
+                    placeholder="Share your experience…" />
+                </div>
+                {reviewErr && <div className="cd-form-err">{reviewErr}</div>}
+              </div>
+              <div className="cd-modal-foot">
+                <button type="button" className="cd-btn cd-btn-ghost" onClick={() => setReviewModal(false)} disabled={reviewSubmitting}>Cancel</button>
+                <button type="submit" className="cd-btn cd-btn-primary" disabled={reviewSubmitting}>
+                  {reviewSubmitting ? "Submitting…" : "Submit Review"}
                 </button>
               </div>
             </form>

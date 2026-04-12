@@ -279,3 +279,51 @@ export async function getSimilarClients(req, res) {
         return res.status(500).json({ message: 'Database error' })
     }
 }
+
+// GET /api/client-auth/reviews
+export async function getMyReviews(req, res) {
+    const clientId = req.clientId
+    try {
+        const result = await pool.query(
+            `SELECT reviewid, reviewname, rating, reviewcomment, reviewdate
+             FROM public.reviews
+             WHERE client = $1
+             ORDER BY reviewdate DESC, reviewid DESC`,
+            [clientId]
+        )
+        return res.json(result.rows)
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Database error' })
+    }
+}
+
+// POST /api/client-auth/reviews
+export async function submitReview(req, res) {
+    const clientId = req.clientId
+    const { reviewName, rating, reviewComment } = req.body ?? {}
+
+    const nameTrim = typeof reviewName === 'string' ? reviewName.trim() : ''
+    if (!nameTrim) return res.status(400).json({ message: 'Review name is required' })
+    if (nameTrim.length > 100) return res.status(400).json({ message: 'Review name must be ≤ 100 characters' })
+
+    const ratingNum = typeof rating === 'string' ? parseInt(rating, 10) : Number(rating)
+    if (!Number.isInteger(ratingNum) || ratingNum < 0 || ratingNum > 5) {
+        return res.status(400).json({ message: 'Rating must be an integer between 0 and 5' })
+    }
+
+    const comment = typeof reviewComment === 'string' ? reviewComment.trim() : ''
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO public.reviews (reviewcomment, reviewname, rating, reviewdate, client)
+             VALUES ($1, $2, $3, CURRENT_DATE, $4)
+             RETURNING reviewid, reviewname, rating, reviewcomment, reviewdate`,
+            [comment || null, nameTrim, ratingNum, clientId]
+        )
+        return res.status(201).json(result.rows[0])
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Database error' })
+    }
+}

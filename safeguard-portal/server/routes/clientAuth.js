@@ -11,6 +11,8 @@ import {
     getPaymentSummary,
     getPaymentBreakdown,
     getSimilarClients,
+    getMyReviews,
+    submitReview,
 } from '../controllers/clientAuthController.js'
 
 dotenv.config()
@@ -39,5 +41,7 @@ router.get('/payments', requireClient, getMyPayments)
 router.get('/payment-summary', requireClient, getPaymentSummary)
 router.get('/payment-breakdown', requireClient, getPaymentBreakdown)
 router.get('/similar-clients', requireClient, getSimilarClients)
+router.get('/reviews', requireClient, getMyReviews)
+router.post('/reviews', requireClient, submitReview)
 
 export { router as clientAuthRouter }

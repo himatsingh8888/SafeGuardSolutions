@@ -351,6 +351,26 @@
   line-height: 1.5;
 }
 
+.cd-reviews { display: flex; flex-direction: column; gap: 10px; }
+.cd-review-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 16px 20px;
+}
+.cd-review-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.cd-review-name  { font-size: 14px; font-weight: 600; color: #111; }
+.cd-review-stars { font-size: 14px; color: #f0a500; letter-spacing: 1px; }
+.cd-review-date  { font-size: 12px; color: #bbb; margin-left: auto; }
+.cd-review-comment { font-size: 13px; color: #555; line-height: 1.55; margin: 0; }
+.cd-textarea { height: auto !important; padding: 10px 12px !important; resize: vertical; }
+
 @media (max-width: 680px) {
   .cd-header        { padding: 0 16px; }
   .cd-main          { padding: 24px 16px 60px; }
