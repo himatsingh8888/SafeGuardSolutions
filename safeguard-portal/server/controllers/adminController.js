@@ -294,13 +294,27 @@ export async function addClient(req, res) {
 }
 
 export async function deleteClient(req, res) {
-    try {
-        const { clientid } = req.body
+    const { clientid } = req.body
+    if (clientid == null || clientid === '') {
+        return res.status(400).json({ message: 'clientid is required' })
+    }
 
-        const result = await pool.query(
-            'DELETE FROM client WHERE clientid = $1 RETURNING *',
+    const c = await pool.connect()
+    try {
+        await c.query('BEGIN')
+        // Installations reference location(siteid); remove them first so locations can go.
+        await c.query(
+            `DELETE FROM public.installation i
+             USING public.location l
+             WHERE i.siteid = l.siteid AND l.client = $1`,
             [clientid]
         )
+        await c.query('DELETE FROM public.location WHERE client = $1', [clientid])
+        await c.query('DELETE FROM public.payment WHERE client = $1', [clientid])
+        await c.query('DELETE FROM public.reviews WHERE client = $1', [clientid])
+        // client_auth has ON DELETE CASCADE from client — no separate delete needed.
+        const result = await c.query('DELETE FROM public.client WHERE clientid = $1 RETURNING *', [clientid])
+        await c.query('COMMIT')
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Client not found' })
@@ -308,8 +322,16 @@ export async function deleteClient(req, res) {
 
         res.json({ message: 'Client deleted successfully' })
     } catch (err) {
+        try {
+            await c.query('ROLLBACK')
+        } catch (_) {
+            /* no active transaction */
+        }
         console.error(err)
-        res.status(500).json({ error: 'Failed to delete client' })
+        const msg = err.code === '23503' ? 'Cannot delete client: related data still references this client.' : err.message
+        res.status(500).json({ error: 'Failed to delete client', detail: msg })
+    } finally {
+        c.release()
     }
 }
 

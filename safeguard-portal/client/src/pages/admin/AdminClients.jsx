@@ -12,6 +12,9 @@ export default function AdminClients() {
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState(null)
     const [selectedClient, setSelectedClient] = useState(null)
+    const [deleteError, setDeleteError] = useState(null)
+    const [deleteTarget, setDeleteTarget] = useState(null)
+    const [deleting, setDeleting] = useState(false)
 
     useEffect(() => {
         fetchClients();
@@ -21,7 +24,19 @@ export default function AdminClients() {
         fetchClients();
     }, [refresh]);
 
-    async function deleteClient(clientid) {
+    function openDeleteModal(client, e) {
+        e.stopPropagation()
+        setDeleteError(null)
+        setDeleteTarget({
+            clientid: client.clientid,
+            name: `${client.fname ?? ''} ${client.lname ?? ''}`.trim() || `Client #${client.clientid}`,
+        })
+    }
+
+    async function performDelete() {
+        if (!deleteTarget) return
+        setDeleting(true)
+        setDeleteError(null)
         try {
             const res = await fetch(`${API_BASE}/api/admin/deleteClient`, {
                 method: 'DELETE',
@@ -29,16 +44,22 @@ export default function AdminClients() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ clientid })
+                body: JSON.stringify({ clientid: deleteTarget.clientid })
             })
-            const data = await res.json()
+            const data = await res.json().catch(() => ({}))
 
             if (res.ok) {
-                console.log(data.message)
+                setDeleteTarget(null)
+                setExpanded(null)
                 setRefresh(prev => prev + 1)
+            } else {
+                setDeleteError(data.detail || data.error || data.message || `Delete failed (${res.status})`)
             }
         } catch (error) {
             console.error(error)
+            setDeleteError(error.message || 'Network error')
+        } finally {
+            setDeleting(false)
         }
     }
 
@@ -145,6 +166,36 @@ export default function AdminClients() {
 
     return (
         <div>
+            {deleteTarget && (
+                <div className="overlay" onClick={() => { if (!deleting) setDeleteTarget(null) }} role="presentation">
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Delete client?</h2>
+                            <button
+                                type="button"
+                                className="modal-close"
+                                onClick={() => { if (!deleting) setDeleteTarget(null) }}
+                                aria-label="Close"
+                                disabled={deleting}
+                            >×</button>
+                        </div>
+                        <div className="modal-body">
+                            <p className="clients-delete-confirm-text">
+                                This will permanently remove <strong>{deleteTarget.name}</strong> and related sites, scheduled jobs, payments, and reviews. This cannot be undone.
+                            </p>
+                            {deleteError && (
+                                <p className="clients-delete-modal-error" role="alert">{deleteError}</p>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="clients-btn-edit" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button>
+                            <button type="button" className="clients-btn-delete" onClick={performDelete} disabled={deleting}>
+                                {deleting ? 'Deleting…' : 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {showModal && (
                 <div className="overlay" onClick={() => setShowModal(false)}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
@@ -209,6 +260,13 @@ export default function AdminClients() {
                             Add Client
                         </button>
                     </div>
+
+                    {deleteError && (
+                        <div className="clients-error-banner" role="alert">
+                            {deleteError}
+                            <button type="button" className="clients-error-dismiss" onClick={() => setDeleteError(null)} aria-label="Dismiss">×</button>
+                        </div>
+                    )}
 
                     <div className="clients-toolbar">
                         <div className="clients-search-wrap">
@@ -290,7 +348,7 @@ export default function AdminClients() {
                                                         setShowModal(true);
                                                         setSelectedClient(client);
                                                     }}>Edit</button>
-                                                    <button onClick={() => deleteClient(client.clientid)} className="clients-btn-delete">Delete</button>
+                                                    <button type="button" onClick={(e) => openDeleteModal(client, e)} className="clients-btn-delete">Delete</button>
                                                 </div>
                                             </div>
                                         )}
