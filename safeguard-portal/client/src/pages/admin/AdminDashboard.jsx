@@ -129,33 +129,6 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section className="adm-section" aria-labelledby="filters-heading">
-          <h2 id="filters-heading" className="adm-section-title">Report filters</h2>
-          <div className="adm-panel">
-            <div className="adm-panel-row">
-              <div className="adm-panel-field">
-                <label className="form-label" htmlFor="dash-month">Month</label>
-                <select id="dash-month" className="form-select" defaultValue="current" aria-label="Month filter">
-                  <option value="current">Current month</option>
-                  <option value="q1">Q1</option>
-                  <option value="q2">Q2</option>
-                  <option value="q3">Q3</option>
-                  <option value="q4">Q4</option>
-                </select>
-              </div>
-              <div className="adm-panel-field">
-                <label className="form-label" htmlFor="dash-pay-status">Payment status</label>
-                <select id="dash-pay-status" className="form-select" defaultValue="all" aria-label="Payment status filter">
-                  <option value="all">All</option>
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
-                  <option value="overdue">Overdue</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="adm-section" aria-labelledby="activity-heading">
           <h2 id="activity-heading" className="adm-section-title">Recent activity</h2>
           <div className="adm-activity-grid">
