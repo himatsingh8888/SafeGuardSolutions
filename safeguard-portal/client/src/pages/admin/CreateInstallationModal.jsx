@@ -5,6 +5,8 @@ export default function CreateInstallationModal({
   onClose,
   locations,
   locationsLoading,
+  employees,
+  employeesLoading,
   createError,
   todayMin,
   onSubmit,
@@ -65,7 +67,7 @@ export default function CreateInstallationModal({
                     />
                   </div>
                   <div className="form-field">
-                    <label className="form-label" htmlFor="inst-techs">Technicians</label>
+                    <label className="form-label" htmlFor="inst-techs">Headcount (optional)</label>
                     <input
                       id="inst-techs"
                       name="techniciannumbs"
@@ -74,8 +76,32 @@ export default function CreateInstallationModal({
                       min={0}
                       step={1}
                       defaultValue={1}
+                      title="Used only if no technicians are checked below"
                     />
                   </div>
+                </div>
+                <div className="form-field full">
+                  <span className="form-label">Assigned technicians</span>
+                  <p className="adm-muted-inline" style={{ margin: '0 0 8px' }}>
+                    Required for jobs to appear on an employee’s portal. Matches the <strong>assignment</strong> table.
+                  </p>
+                  {employeesLoading ? (
+                    <p className="adm-muted-inline">Loading employees…</p>
+                  ) : !employees?.length ? (
+                    <p className="adm-muted-inline">No employees yet. Add staff under Employees first.</p>
+                  ) : (
+                    <div className="assign-tech-list">
+                      {employees.map((emp) => (
+                        <label key={emp.employeeid} className="assign-tech-row">
+                          <input type="checkbox" name="employeeIds" value={emp.employeeid} />
+                          <span>
+                            {emp.fname} {emp.lname}
+                            <span className="adm-mono" style={{ marginLeft: 8 }}>#{emp.employeeid}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="form-row">
                   <div className="form-field">

@@ -4,6 +4,7 @@ import './AdminInstallations.css'
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../../config/apiBase.js'
 import CreateInstallationModal from './CreateInstallationModal.jsx'
+import AssignTechniciansModal from './AssignTechniciansModal.jsx'
 
 function installationBadgeClass(status) {
   const s = String(status || '').toLowerCase()
@@ -21,6 +22,9 @@ export default function AdminInstallations() {
   const [locations, setLocations] = useState([])
   const [locationsLoading, setLocationsLoading] = useState(false)
   const [createError, setCreateError] = useState(null)
+  const [employees, setEmployees] = useState([])
+  const [employeesLoading, setEmployeesLoading] = useState(false)
+  const [assignInstallation, setAssignInstallation] = useState(null)
 
   const fetchInstallations = async () => {
     try {
@@ -44,6 +48,26 @@ export default function AdminInstallations() {
 
   useEffect(() => {
     fetchInstallations()
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    async function loadEmployees() {
+      setEmployeesLoading(true)
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/getEmployees`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        })
+        const data = await res.json().catch(() => [])
+        if (!cancelled) setEmployees(Array.isArray(data) ? data : [])
+      } catch {
+        if (!cancelled) setEmployees([])
+      } finally {
+        if (!cancelled) setEmployeesLoading(false)
+      }
+    }
+    loadEmployees()
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
@@ -89,6 +113,9 @@ export default function AdminInstallations() {
     const price = form.price.value
     const techniciannumbs = form.techniciannumbs.value
     const description = form.description.value.trim()
+    const employeeIds = [...form.querySelectorAll('input[name="employeeIds"]:checked')]
+      .map((el) => Number(el.value))
+      .filter((n) => !Number.isNaN(n) && n > 0)
 
     try {
       const res = await fetch(`${API_BASE}/api/admin/addInstallation`, {
@@ -104,6 +131,7 @@ export default function AdminInstallations() {
           price,
           techniciannumbs,
           description: description || null,
+          employeeIds,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -194,9 +222,19 @@ export default function AdminInstallations() {
           onClose={() => setShowCreateModal(false)}
           locations={locations}
           locationsLoading={locationsLoading}
+          employees={employees}
+          employeesLoading={employeesLoading}
           createError={createError}
           todayMin={todayMin}
           onSubmit={handleCreateInstallation}
+        />
+
+        <AssignTechniciansModal
+          open={assignInstallation != null}
+          installation={assignInstallation}
+          employees={employees}
+          onClose={() => setAssignInstallation(null)}
+          onSaved={() => fetchInstallations()}
         />
 
         <div className="clients-page-header">
@@ -294,17 +332,26 @@ export default function AdminInstallations() {
                         </span>
                       </td>
                       <td>
-                        {installation.status === 'Scheduled' ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                           <button
                             type="button"
-                            className="adm-btn-action"
-                            onClick={() => updateInstallationStatus(installation.installationid, 'Completed')}
+                            className="clients-btn-edit"
+                            onClick={() => setAssignInstallation(installation)}
                           >
-                            Mark complete
+                            Assign techs
                           </button>
-                        ) : (
-                          <span className="adm-muted-inline">Done {formatDate(installation.completeddate)}</span>
-                        )}
+                          {installation.status === 'Scheduled' ? (
+                            <button
+                              type="button"
+                              className="adm-btn-action"
+                              onClick={() => updateInstallationStatus(installation.installationid, 'Completed')}
+                            >
+                              Mark complete
+                            </button>
+                          ) : (
+                            <span className="adm-muted-inline">Done {formatDate(installation.completeddate)}</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

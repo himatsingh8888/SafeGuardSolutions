@@ -5,7 +5,8 @@ import {
     updateQuoteRequest, deleteQuoteRequest,
     getClients, addClient, deleteClient, updateClient, getReviews,
     getInstallations, updateInstallationStatus, getLocations, addInstallation,
-    getEmployeesAllSkills
+    getEmployeesAllSkills,
+    getInstallationAssignments, setInstallationAssignments,
 } from '../controllers/adminController.js';
 
 
@@ -41,5 +42,7 @@ adminRouter.get('/getInstallations', getInstallations)
 adminRouter.get('/getLocations', getLocations)
 adminRouter.post('/addInstallation', addInstallation)
 adminRouter.put('/updateInstallationStatus', updateInstallationStatus)
+adminRouter.get('/getInstallationAssignments', getInstallationAssignments)
+adminRouter.put('/setInstallationAssignments', setInstallationAssignments)
 
 

@@ -65,11 +65,7 @@ export async function getEmployees(req, res) {
             LEFT JOIN employeeskill es ON e.employeeid = es.employeeid
             GROUP BY e.employeeid`)
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'No employees found' })
-        }
-
-        res.json(result.rows)
+        res.json(result.rows.length === 0 ? [] : result.rows)
     } catch (err) {
         console.error(err)
         res.status(500).json({ error: 'Failed to fetch employees' })
@@ -433,8 +429,104 @@ export async function getLocations(req, res) {
     }
 }
 
+function normalizeEmployeeIds(body) {
+    const raw = body?.employeeIds
+    const arr = Array.isArray(raw) ? raw : []
+    return [...new Set(arr.map((x) => parseInt(String(x), 10)).filter((n) => !Number.isNaN(n) && n > 0))]
+}
+
+async function assertEmployeesExist(client, employeeIds) {
+    if (employeeIds.length === 0) return true
+    const r = await client.query(
+        'SELECT COUNT(*)::int AS c FROM public.employee WHERE employeeid = ANY($1::int[])',
+        [employeeIds]
+    )
+    return r.rows[0].c === employeeIds.length
+}
+
+export async function getInstallationAssignments(req, res) {
+    const installationid = parseInt(String(req.query.installationid ?? ''), 10)
+    if (Number.isNaN(installationid) || installationid <= 0) {
+        return res.status(400).json({ message: 'installationid is required' })
+    }
+    try {
+        const r = await pool.query(
+            'SELECT employeeid FROM public.assignment WHERE installationid = $1 ORDER BY employeeid',
+            [installationid]
+        )
+        return res.json({ employeeIds: r.rows.map((row) => row.employeeid) })
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ error: 'Failed to fetch assignments', detail: err.message })
+    }
+}
+
+export async function setInstallationAssignments(req, res) {
+    const installationid = parseInt(String(req.body?.installationid ?? ''), 10)
+    const employeeIds = normalizeEmployeeIds(req.body)
+
+    if (Number.isNaN(installationid) || installationid <= 0) {
+        return res.status(400).json({ message: 'installationid is required' })
+    }
+
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN')
+
+        const inst = await client.query(
+            'SELECT installationid FROM public.installation WHERE installationid = $1',
+            [installationid]
+        )
+        if (inst.rowCount === 0) {
+            await client.query('ROLLBACK')
+            return res.status(404).json({ message: 'Installation not found' })
+        }
+
+        if (employeeIds.length > 0) {
+            const ok = await assertEmployeesExist(client, employeeIds)
+            if (!ok) {
+                await client.query('ROLLBACK')
+                return res.status(400).json({ message: 'One or more employee ids are invalid' })
+            }
+        }
+
+        await client.query('DELETE FROM public.assignment WHERE installationid = $1', [installationid])
+
+        for (const eid of employeeIds) {
+            await client.query(
+                'INSERT INTO public.assignment (employeeid, installationid, hoursworked) VALUES ($1, $2, 0)',
+                [eid, installationid]
+            )
+        }
+
+        await client.query(
+            'UPDATE public.installation SET techniciannumbs = $1 WHERE installationid = $2',
+            [employeeIds.length, installationid]
+        )
+
+        await client.query('COMMIT')
+        return res.json({
+            message: 'Technicians updated',
+            installationid,
+            employeeIds,
+            techniciannumbs: employeeIds.length,
+        })
+    } catch (err) {
+        try {
+            await client.query('ROLLBACK')
+        } catch (rb) {
+            console.error(rb)
+        }
+        console.error(err)
+        return res.status(500).json({ error: 'Failed to update assignments', detail: err.message })
+    } finally {
+        client.release()
+    }
+}
+
 export async function addInstallation(req, res) {
     const { siteid, scheduleddate, internalcost, price, techniciannumbs, description } = req.body
+    const employeeIds = normalizeEmployeeIds(req.body)
 
     if (siteid == null || scheduleddate == null || String(scheduleddate).trim() === '') {
         return res.status(400).json({ message: 'siteid and scheduleddate are required' })
@@ -448,30 +540,62 @@ export async function addInstallation(req, res) {
         return res.status(400).json({ message: 'internalcost, price, and techniciannumbs must be valid non-negative numbers' })
     }
 
-    try {
-        const exists = await pool.query('SELECT 1 FROM public.location WHERE siteid = $1', [siteid])
-        if (exists.rowCount === 0) {
-            return res.status(400).json({ message: 'Invalid site (location) id' })
-        }
+    const effectiveTn = employeeIds.length > 0 ? employeeIds.length : tn
 
-        const result = await pool.query(
+    const exists = await pool.query('SELECT 1 FROM public.location WHERE siteid = $1', [siteid])
+    if (exists.rowCount === 0) {
+        return res.status(400).json({ message: 'Invalid site (location) id' })
+    }
+
+    const client = await pool.connect()
+    try {
+        await client.query('BEGIN')
+
+        const result = await client.query(
             `INSERT INTO public.installation (
                 siteid, scheduleddate, internalcost, price, techniciannumbs, description, status, completeddate
             ) VALUES ($1, $2::date, $3, $4, $5, $6, 'Scheduled', NULL)
             RETURNING *`,
-            [siteid, scheduleddate, ic, pr, tn, description || null]
+            [siteid, scheduleddate, ic, pr, effectiveTn, description || null]
         )
+
+        const row = result.rows[0]
+        const iid = row.installationid
+
+        if (employeeIds.length > 0) {
+            const ok = await assertEmployeesExist(client, employeeIds)
+            if (!ok) {
+                await client.query('ROLLBACK')
+                return res.status(400).json({ message: 'One or more employee ids are invalid' })
+            }
+            for (const eid of employeeIds) {
+                await client.query(
+                    'INSERT INTO public.assignment (employeeid, installationid, hoursworked) VALUES ($1, $2, 0)',
+                    [eid, iid]
+                )
+            }
+        }
+
+        await client.query('COMMIT')
 
         res.status(201).json({
             message: 'Installation created',
-            installation: result.rows[0],
+            installation: row,
+            assignedEmployeeIds: employeeIds,
         })
     } catch (err) {
+        try {
+            await client.query('ROLLBACK')
+        } catch (rollbackErr) {
+            console.error(rollbackErr)
+        }
         console.error(err)
         res.status(500).json({
             error: 'Failed to create installation',
             detail: err.message,
         })
+    } finally {
+        client.release()
     }
 }
 
