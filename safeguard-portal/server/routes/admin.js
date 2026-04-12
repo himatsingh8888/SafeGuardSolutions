@@ -33,6 +33,7 @@ adminRouter.get('/getClients', getClients)
 adminRouter.post('/addClient', addClient)
 adminRouter.put('/updateClient', updateClient)
 adminRouter.delete('/deleteClient', deleteClient)
+adminRouter.get('/employeesAllSkills', getEmployeesAllSkills)
 
 // Installation routes
 adminRouter.get('/getInstallations', getInstallations)

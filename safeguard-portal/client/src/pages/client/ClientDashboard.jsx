@@ -1,41 +1,52 @@
-import Navbar from "../../components/Navbar";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import "../../index.css";
-import "../admin/AdminDashboard.css";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../../config/apiBase.js";
 import "./ClientDashboard.css";
-import {
-  fetchClient,
-  fetchClientReviews,
-  fetchInstallationDetail,
-  fetchInstallations,
-  fetchPayments,
-  getStoredClientId,
-  statusToProgress,
-  submitClientReview,
-  updateClient,
-} from "../../api/clientApi.js";
 
-const INSTALLATION_LIST_LIMIT = 100;
+const TOKEN_KEY = "clientToken";
 
-function pickCurrentInstallation(list) {
-  if (!list.length) return null;
-  const active = list.find((row) => {
-    const s = row.status.toLowerCase();
-    return !s.includes("complete") && !s.includes("cancel");
-  });
-  return active ?? list[0];
+function authHeaders() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  return { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+}
+
+async function apiFetch(path, options = {}) {
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers: { ...authHeaders(), ...options.headers } });
+  const text = await res.text();
+  let data = null;
+  if (text) { try { data = JSON.parse(text); } catch { data = text; } }
+  if (!res.ok) {
+    const err = new Error(typeof data === "object" && data?.message ? data.message : `Error ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
+
+function fmt(val) {
+  if (val === null || val === undefined || val === "") return "—";
+  return String(val);
+}
+
+function fmtDate(val) {
+  if (!val) return "—";
+  return String(val).slice(0, 10);
+}
+
+function fmtMoney(val) {
+  const n = parseFloat(val);
+  if (isNaN(n)) return "—";
+  return `$${n.toFixed(2)}`;
 }
 
 function statusBadgeClass(status) {
   const s = String(status || "").toLowerCase();
-  if (s.includes("paid")) return "status-completed";
-  if (s.includes("overdue")) return "status-cancelled";
-  if (s.includes("pending")) return "status-in-progress";
-  if (s.includes("complete")) return "status-completed";
-  if (s.includes("progress")) return "status-in-progress";
-  if (s.includes("cancel")) return "status-cancelled";
-  if (s.includes("schedule")) return "status-scheduled";
-  return "status-scheduled";
+  if (s.includes("complete") || s.includes("paid")) return "cd-badge-complete";
+  if (s.includes("progress")) return "cd-badge-progress";
+  if (s.includes("cancel") || s.includes("overdue")) return "cd-badge-cancel";
+  if (s.includes("schedule")) return "cd-badge-schedule";
+  if (s.includes("pending")) return "cd-badge-pending";
+  return "cd-badge-pending";
 }
 
 function formatReviewDate(value) {
@@ -50,720 +61,614 @@ function formatReviewDate(value) {
 }
 
 export default function ClientDashboard() {
-  const clientId = getStoredClientId();
+  const navigate = useNavigate();
 
-  const [message, setMessage] = useState("");
-  const [messageSent, setMessageSent] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  const [loading, setLoading] = useState(!!clientId);
-  const [loadError, setLoadError] = useState("");
-
-  const [profile, setProfile] = useState({
-    fname: "",
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    customerType: "",
-  });
+  const [profile, setProfile] = useState(null);
   const [installations, setInstallations] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [myReviews, setMyReviews] = useState([]);
+  const [paymentSummary, setPaymentSummary] = useState(null);
+  const [paymentBreakdown, setPaymentBreakdown] = useState([]);
+  const [similarClients, setSimilarClients] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorBanner, setErrorBanner] = useState("");
+  const [staleBanner, setStaleBanner] = useState("");
 
-  const [reviewName, setReviewName] = useState("");
-  const [reviewRating, setReviewRating] = useState("5");
-  const [reviewComment, setReviewComment] = useState("");
-  const [reviewError, setReviewError] = useState("");
-  const [reviewSuccess, setReviewSuccess] = useState(false);
-  const [reviewSubmitting, setReviewSubmitting] = useState(false);
-
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileDraft, setProfileDraft] = useState(profile);
-  const [profileError, setProfileError] = useState("");
-  const [profileSaved, setProfileSaved] = useState(false);
-  const [profileSaving, setProfileSaving] = useState(false);
-
-  const [installationDetail, setInstallationDetail] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState("");
-
-  const loadDashboard = useCallback(async () => {
-    if (!clientId) {
-      setLoading(false);
-      return;
-    }
+  const loadAll = useCallback(async () => {
     setLoading(true);
-    setLoadError("");
+    setErrorBanner("");
     try {
-      const [clientRow, instList, payList, reviewList] = await Promise.all([
-        fetchClient(clientId),
-        fetchInstallations(clientId, INSTALLATION_LIST_LIMIT),
-        fetchPayments(clientId),
-        fetchClientReviews(clientId),
+      const [prof, inst, pays, summary, breakdown, similar, revs] = await Promise.all([
+        apiFetch("/api/client-auth/me"),
+        apiFetch("/api/client-auth/installations"),
+        apiFetch("/api/client-auth/payments"),
+        apiFetch("/api/client-auth/payment-summary"),
+        apiFetch("/api/client-auth/payment-breakdown"),
+        apiFetch("/api/client-auth/similar-clients"),
+        apiFetch("/api/client-auth/reviews"),
       ]);
-
-      if (clientRow) {
-        setProfile({
-          fname: clientRow.fname,
-          name: clientRow.name,
-          email: clientRow.email,
-          phone: clientRow.phone,
-          address: clientRow.address,
-          customerType: clientRow.customerType,
-        });
-        setProfileDraft({
-          fname: clientRow.fname,
-          name: clientRow.name,
-          email: clientRow.email,
-          phone: clientRow.phone,
-          address: clientRow.address,
-          customerType: clientRow.customerType,
-        });
-      }
-
-      setInstallations(instList);
-      setPayments(payList);
-      setMyReviews(reviewList);
+      setProfile(prof);
+      setInstallations(inst);
+      setPayments(pays);
+      setPaymentSummary(summary);
+      setPaymentBreakdown(breakdown);
+      setSimilarClients(similar);
+      setReviews(revs);
     } catch (err) {
-      console.error(err);
-      setLoadError(err.message || "Could not load dashboard data.");
+      if (err.status === 401 || err.status === 403) {
+        localStorage.removeItem(TOKEN_KEY);
+        navigate("/client/login");
+        return;
+      }
+      setErrorBanner(err.message || "Failed to load data.");
     } finally {
       setLoading(false);
     }
-  }, [clientId]);
+  }, [navigate]);
 
   useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) { navigate("/client/login"); return; }
+    loadAll();
+  }, [loadAll, navigate]);
 
-  const currentInstallation = useMemo(
-    () => pickCurrentInstallation(installations),
-    [installations]
-  );
+  function handleStale(msg) {
+    setStaleBanner(msg);
+    loadAll();
+  }
 
-  const historyRows = useMemo(() => {
-    if (!currentInstallation) return installations;
-    return installations.filter((row) => row.id !== currentInstallation.id);
-  }, [installations, currentInstallation]);
+  function handleSignOut() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("clientId");
+    navigate("/client/login");
+  }
 
-  const completedCount = useMemo(
-    () =>
-      installations.filter((i) => String(i.status || "").toLowerCase().includes("complete"))
-        .length,
-    [installations]
-  );
 
-  const pendingPaymentsCount = useMemo(
-    () => payments.filter((p) => String(p.status || "").toLowerCase() === "pending").length,
-    [payments]
-  );
 
-  const handleOpenDetail = async (installationId) => {
-    if (!clientId || !installationId) return;
-    setDetailError("");
-    setInstallationDetail(null);
-    setDetailLoading(true);
-    try {
-      const raw = await fetchInstallationDetail(clientId, installationId);
-      setInstallationDetail(raw);
-    } catch (err) {
-      console.error(err);
-      setDetailError(err.message || "Could not load installation details.");
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+  // Profile edit modal
+  const [profileModal, setProfileModal] = useState(false);
+  const [profileDraft, setProfileDraft] = useState({ fname: "", lname: "", email: "", billingaddress: "", phone: "" });
+  /** Snapshot when modal opens — server rejects save if row no longer matches (409). */
+  const [profileBaseline, setProfileBaseline] = useState(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileErr, setProfileErr] = useState("");
 
-  const handleSubmitMessage = (event) => {
-    event.preventDefault();
-    if (!message.trim()) return;
-    setMessageSent(true);
-    setMessage("");
-  };
-
-  const handleSubmitReview = async (event) => {
-    event.preventDefault();
-    setReviewError("");
-    setReviewSuccess(false);
-
-    const name = reviewName.trim();
-    const ratingNum = parseInt(reviewRating, 10);
-    if (!name) {
-      setReviewError("Enter the name you want shown with your review.");
-      return;
-    }
-    if (!Number.isInteger(ratingNum) || ratingNum < 0 || ratingNum > 5) {
-      setReviewError("Choose a rating from 0 to 5.");
-      return;
-    }
-
-    if (!clientId) return;
-    setReviewSubmitting(true);
-    try {
-      await submitClientReview(clientId, {
-        reviewName: name,
-        rating: ratingNum,
-        reviewComment: reviewComment.trim(),
-      });
-      setReviewSuccess(true);
-      setReviewComment("");
-      const list = await fetchClientReviews(clientId);
-      setMyReviews(list);
-    } catch (err) {
-      console.error(err);
-      setReviewError(err.message || "Could not submit review.");
-    } finally {
-      setReviewSubmitting(false);
-    }
-  };
-
-  const handleEditProfile = () => {
-    setProfileDraft(profile);
-    setProfileSaved(false);
-    setProfileError("");
-    setIsEditingProfile(true);
-  };
-
-  const handleCancelEditProfile = () => {
-    setProfileDraft(profile);
-    setProfileError("");
-    setIsEditingProfile(false);
-  };
-
-  const handleSaveProfile = async (event) => {
-    event.preventDefault();
-    setProfileSaved(false);
-    setProfileError("");
-
-    const trimmed = {
-      fname: profileDraft.fname.trim(),
-      name: profileDraft.name.trim(),
-      email: profileDraft.email.trim(),
-      phone: profileDraft.phone.trim(),
-      address: profileDraft.address.trim(),
+  function openProfileModal() {
+    const base = {
+      fname: profile?.fname || "",
+      lname: profile?.lname || "",
+      email: profile?.email || "",
+      billingaddress: profile?.billingaddress || "",
+      phone: profile?.phone || "",
     };
+    setProfileBaseline(base);
+    setProfileDraft(base);
+    setProfileErr("");
+    setProfileModal(true);
+  }
 
-    if (!trimmed.fname || !trimmed.name || !trimmed.email || !trimmed.phone || !trimmed.address) {
-      setProfileError("All profile fields are required.");
-      return;
-    }
-
-    if (!/\S+@\S+\.\S+/.test(trimmed.email)) {
-      setProfileError("Enter a valid email address.");
-      return;
-    }
-
-    if (!clientId) {
-      setProfileError("No client ID — log in as a client or set VITE_DEV_CLIENT_ID.");
-      return;
-    }
-
+  async function saveProfile(e) {
+    e.preventDefault();
+    setProfileErr("");
     setProfileSaving(true);
     try {
-      await updateClient(clientId, trimmed);
-      setProfile({ ...profile, ...trimmed, customerType: profile.customerType });
-      setProfileDraft({ ...profileDraft, ...trimmed });
-      const refreshed = await fetchClient(clientId);
-      if (refreshed) {
-        setProfile({
-          fname: refreshed.fname,
-          name: refreshed.name,
-          email: refreshed.email,
-          phone: refreshed.phone,
-          address: refreshed.address,
-          customerType: refreshed.customerType,
-        });
-      }
-      setProfileError("");
-      setProfileSaved(true);
-      setIsEditingProfile(false);
+      await apiFetch("/api/client-auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          fname: profileDraft.fname || undefined,
+          lname: profileDraft.lname || undefined,
+          email: profileDraft.email || undefined,
+          billingaddress: profileDraft.billingaddress || undefined,
+          phone: profileDraft.phone || undefined,
+          expected: profileBaseline || undefined,
+        }),
+      });
+      setProfileModal(false);
+      setProfileBaseline(null);
+      await loadAll();
     } catch (err) {
-      console.error(err);
-      setProfileError(err.message || "Could not save profile.");
+      if (err.status === 409) {
+        setProfileModal(false);
+        setProfileBaseline(null);
+        handleStale(err.message || "Profile was updated elsewhere.");
+      } else {
+        setProfileErr(err.message);
+      }
     } finally {
       setProfileSaving(false);
     }
-  };
+  }
 
-  if (!clientId) {
-    return (
-      <div>
-        <Navbar />
-        <div className="admin-dashboard client-dashboard-shell">
-          <div className="dashboard-container">
-            <h2 className="dashboard-title">Client Dashboard</h2>
-            <div className="client-empty-card">
-              <p className="client-empty-text">
-                No client ID found. Log in with an account that returns <code>clientId</code> from{" "}
-                <code>/api/auth/login</code>, or set <code>VITE_DEV_CLIENT_ID</code> in{" "}
-                <code>client/.env</code> for local testing.
+  // Review modal
+  const [reviewModal, setReviewModal] = useState(false);
+  const [reviewDraft, setReviewDraft] = useState({ reviewName: "", rating: "5", reviewComment: "" });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewErr, setReviewErr] = useState("");
+
+  function openReviewModal() {
+    setReviewDraft({ reviewName: profile ? `${profile.fname} ${profile.lname}`.trim() : "", rating: "5", reviewComment: "" });
+    setReviewErr("");
+    setReviewModal(true);
+  }
+
+  async function saveReview(e) {
+    e.preventDefault();
+    setReviewErr("");
+    setReviewSubmitting(true);
+    try {
+      await apiFetch("/api/client-auth/reviews", {
+        method: "POST",
+        body: JSON.stringify({ reviewName: reviewDraft.reviewName, rating: parseInt(reviewDraft.rating, 10), reviewComment: reviewDraft.reviewComment }),
+      });
+      setReviewModal(false);
+      const revs = await apiFetch("/api/client-auth/reviews");
+      setReviews(revs);
+    } catch (err) {
+      setReviewErr(err.message);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
+  // Cancel installation modal
+  const [cancelModal, setCancelModal] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelErr, setCancelErr] = useState("");
+
+  async function confirmCancel() {
+    setCancelErr("");
+    setCancelling(true);
+    try {
+      await apiFetch(`/api/client-auth/installations/${cancelModal.installationid}`, { method: "DELETE" });
+      setCancelModal(null);
+      await loadAll();
+    } catch (err) {
+      if (err.status === 404 || err.status === 400) {
+        handleStale(err.message);
+        setCancelModal(null);
+      } else {
+        setCancelErr(err.message);
+      }
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  if (loading && !profile) {
+    return <div className="cd-shell"><div className="cd-loading">Loading your portal…</div></div>;
+  }
+
+  const activeInstallations = installations.filter(i => !["Completed", "Cancelled"].includes(i.status));
+  const totalPaid = parseFloat(paymentSummary?.total_amount || 0);
+  const pendingCount = parseInt(paymentSummary?.pending_count || 0, 10);
+
+  return (
+    <div className="cd-shell">
+      {/* Header */}
+      <header className={`cd-header${scrolled ? " cd-header-scrolled" : ""}`}>
+        <div className="cd-header-left">
+          <span className="cd-brand">SafeGuard Solutions</span>
+          <span className="cd-sep" />
+          <span className="cd-portal">Client Portal</span>
+        </div>
+        <div className="cd-header-right">
+          {profile && <span className="cd-user">{profile.fname} {profile.lname}</span>}
+          <button className="cd-signout" onClick={handleSignOut}>Sign out</button>
+        </div>
+      </header>
+
+      <main className="cd-main">
+        {errorBanner && <div className="cd-error-banner">{errorBanner}</div>}
+        {staleBanner && (
+          <div className="cd-stale-banner">
+            <span>{staleBanner} Data has been refreshed.</span>
+            <button className="cd-stale-x" onClick={() => setStaleBanner("")}>×</button>
+          </div>
+        )}
+
+        {/* Page title */}
+        <div className="cd-page-title">
+          <h1>My Dashboard</h1>
+          <p>Manage your installations, payments, and profile</p>
+        </div>
+
+        {/* Stats row */}
+        <div className="cd-stats-row">
+          <div className="cd-stat">
+            <div className="cd-stat-val">{installations.length}</div>
+            <div className="cd-stat-lbl">Total Installations</div>
+          </div>
+          <div className="cd-stat">
+            <div className="cd-stat-val">{activeInstallations.length}</div>
+            <div className="cd-stat-lbl">Active Jobs</div>
+          </div>
+          <div className="cd-stat">
+            <div className="cd-stat-val">{pendingCount}</div>
+            <div className="cd-stat-lbl">Pending Payments</div>
+          </div>
+          <div className="cd-stat">
+            <div className="cd-stat-val">{fmtMoney(totalPaid)}</div>
+            <div className="cd-stat-lbl">Total Billed</div>
+          </div>
+        </div>
+
+        {/* Profile */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">Profile</span>
+            <button className="cd-btn cd-btn-ghost" onClick={openProfileModal}>Edit</button>
+          </div>
+          <div className="cd-card">
+            <dl className="cd-dl">
+              <div className="cd-dl-row">
+                <dt>Name</dt>
+                <dd>{profile ? `${profile.fname} ${profile.lname}` : "—"}</dd>
+              </div>
+              <div className="cd-dl-row">
+                <dt>Username</dt>
+                <dd>{fmt(profile?.username)}</dd>
+              </div>
+              <div className="cd-dl-row">
+                <dt>Email</dt>
+                <dd>{fmt(profile?.email)}</dd>
+              </div>
+              <div className="cd-dl-row">
+                <dt>Phone</dt>
+                <dd>{fmt(profile?.phone)}</dd>
+              </div>
+              <div className="cd-dl-row">
+                <dt>Billing Addr.</dt>
+                <dd>{fmt(profile?.billingaddress)}</dd>
+              </div>
+              <div className="cd-dl-row">
+                <dt>Customer Type</dt>
+                <dd>{fmt(profile?.customertype)}</dd>
+              </div>
+              {profile?.locations?.length > 0 && (
+                <div className="cd-dl-row">
+                  <dt>Sites</dt>
+                  <dd>
+                    <div className="cd-tags">
+                      {profile.locations.map(l => (
+                        <span key={l.siteid} className="cd-tag">{l.address}</span>
+                      ))}
+                    </div>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        </div>
+
+        {/* Installations */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">My Installations</span>
+          </div>
+          {installations.length === 0 ? (
+            <div className="cd-card"><span className="cd-muted">No installations found.</span></div>
+          ) : (
+            <div className="cd-table-wrap">
+              <table className="cd-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th>Site</th>
+                    <th>Scheduled</th>
+                    <th>Completed</th>
+                    <th>Price</th>
+                    <th>Visits</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {installations.map(inst => (
+                    <tr key={inst.installationid}>
+                      <td className="cd-mono">{inst.installationid}</td>
+                      <td>{fmt(inst.description)}</td>
+                      <td>{fmt(inst.siteaddress)}</td>
+                      <td>{fmtDate(inst.scheduleddate)}</td>
+                      <td>{fmtDate(inst.completeddate)}</td>
+                      <td>{fmtMoney(inst.price)}</td>
+                      <td>{inst.visit_count}</td>
+                      <td><span className={`cd-badge ${statusBadgeClass(inst.status)}`}>{inst.status}</span></td>
+                      <td>
+                        {inst.status === "Scheduled" && (
+                          <button
+                            className="cd-btn cd-btn-danger"
+                            onClick={() => { setCancelErr(""); setCancelModal(inst); }}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Payments */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">Payments</span>
+          </div>
+
+          {/* Summary strip */}
+          {paymentSummary && (
+            <div className="cd-summary-strip">
+              <div className="cd-summary-item">
+                <div className="cd-summary-val">{paymentSummary.total_count}</div>
+                <div className="cd-summary-lbl">Total</div>
+              </div>
+              <div className="cd-summary-item">
+                <div className="cd-summary-val">{fmtMoney(paymentSummary.total_amount)}</div>
+                <div className="cd-summary-lbl">Total Billed</div>
+              </div>
+              <div className="cd-summary-item">
+                <div className="cd-summary-val">{fmtMoney(paymentSummary.avg_amount)}</div>
+                <div className="cd-summary-lbl">Average</div>
+              </div>
+              <div className="cd-summary-item">
+                <div className="cd-summary-val">{fmtMoney(paymentSummary.min_amount)}</div>
+                <div className="cd-summary-lbl">Min</div>
+              </div>
+              <div className="cd-summary-item">
+                <div className="cd-summary-val">{fmtMoney(paymentSummary.max_amount)}</div>
+                <div className="cd-summary-lbl">Max</div>
+              </div>
+            </div>
+          )}
+
+          {/* Breakdown by status */}
+          {paymentBreakdown.length > 0 && (
+            <div className="cd-section" style={{ marginBottom: 16 }}>
+              <div className="cd-section-hd">
+                <span className="cd-section-title">Breakdown by Status</span>
+              </div>
+              <div className="cd-table-wrap">
+                <table className="cd-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Count</th>
+                      <th>Total</th>
+                      <th>Average</th>
+                      <th>Min</th>
+                      <th>Max</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentBreakdown.map(row => (
+                      <tr key={row.status}>
+                        <td><span className={`cd-badge ${statusBadgeClass(row.status)}`}>{row.status}</span></td>
+                        <td>{row.count}</td>
+                        <td>{fmtMoney(row.total)}</td>
+                        <td>{fmtMoney(row.avg_amount)}</td>
+                        <td>{fmtMoney(row.min_amount)}</td>
+                        <td>{fmtMoney(row.max_amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Payments list */}
+          {payments.length === 0 ? (
+            <div className="cd-card"><span className="cd-muted">No payments on file.</span></div>
+          ) : (
+            <div className="cd-table-wrap">
+              <table className="cd-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Due</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map(p => (
+                    <tr key={p.paymentid}>
+                      <td className="cd-mono">{p.paymentid}</td>
+                      <td>{fmt(p.paymenttype)}</td>
+                      <td>{fmtMoney(p.totalamount)}</td>
+                      <td><span className={`cd-badge ${statusBadgeClass(p.status)}`}>{p.status}</span></td>
+                      <td>{fmtDate(p.duedate)}</td>
+                      <td>{fmtDate(p.createdate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Similar Clients (Division) */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">Clients with Matching Service Experience</span>
+          </div>
+          {similarClients.length === 0 ? (
+            <div className="cd-card"><span className="cd-muted">No clients found with the same range of service visit types.</span></div>
+          ) : (
+            <div className="cd-peers">
+              {similarClients.map(c => (
+                <div key={c.clientid} className="cd-peer">
+                  <div className="cd-peer-name">{c.fname} {c.lname}</div>
+                  <div className="cd-tags" style={{ marginTop: 6 }}>
+                    {(c.shared_types || []).map(t => <span key={t} className="cd-tag">{t}</span>)}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>{fmt(c.customertype)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Reviews */}
+        <div className="cd-section">
+          <div className="cd-section-hd">
+            <span className="cd-section-title">My Reviews</span>
+            <button className="cd-btn cd-btn-ghost" onClick={openReviewModal}>+ Write a Review</button>
+          </div>
+          {reviews.length === 0 ? (
+            <div className="cd-card"><span className="cd-muted">No reviews yet. Share your experience!</span></div>
+          ) : (
+            <div className="cd-reviews">
+              {reviews.map(r => (
+                <div key={r.reviewid} className="cd-review-card">
+                  <div className="cd-review-top">
+                    <span className="cd-review-name">{r.reviewname}</span>
+                    <span className="cd-review-stars">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</span>
+                    <span className="cd-review-date">{fmtDate(r.reviewdate)}</span>
+                  </div>
+                  {r.reviewcomment && <p className="cd-review-comment">{r.reviewcomment}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </main>
+
+      {/* Profile Edit Modal */}
+      {profileModal && (
+        <div className="cd-overlay" onClick={e => { if (e.target === e.currentTarget) setProfileModal(false); }}>
+          <div className="cd-modal">
+            <div className="cd-modal-head">
+              Edit Profile
+              <button className="cd-modal-x" onClick={() => setProfileModal(false)}>×</button>
+            </div>
+            <form onSubmit={saveProfile}>
+              <div className="cd-modal-body cd-modal-grid">
+                <div className="cd-field">
+                  <label className="cd-label">First Name</label>
+                  <input className="cd-input" value={profileDraft.fname}
+                    onChange={e => setProfileDraft(d => ({ ...d, fname: e.target.value }))} />
+                </div>
+                <div className="cd-field">
+                  <label className="cd-label">Last Name</label>
+                  <input className="cd-input" value={profileDraft.lname}
+                    onChange={e => setProfileDraft(d => ({ ...d, lname: e.target.value }))} />
+                </div>
+                <div className="cd-field cd-field-full">
+                  <label className="cd-label">Email</label>
+                  <input className="cd-input" type="email" value={profileDraft.email}
+                    onChange={e => setProfileDraft(d => ({ ...d, email: e.target.value }))} />
+                </div>
+                <div className="cd-field cd-field-full">
+                  <label className="cd-label">Billing Address</label>
+                  <input className="cd-input" value={profileDraft.billingaddress}
+                    onChange={e => setProfileDraft(d => ({ ...d, billingaddress: e.target.value }))}
+                    placeholder="123 Main St, Vancouver, BC" />
+                </div>
+                <div className="cd-field">
+                  <label className="cd-label">Phone</label>
+                  <input className="cd-input" value={profileDraft.phone}
+                    onChange={e => setProfileDraft(d => ({ ...d, phone: e.target.value }))}
+                    placeholder="6041234567" />
+                </div>
+                {profileErr && <div className="cd-form-err cd-field-full">{profileErr}</div>}
+              </div>
+              <div className="cd-modal-foot">
+                <button type="button" className="cd-btn cd-btn-ghost" onClick={() => setProfileModal(false)} disabled={profileSaving}>Cancel</button>
+                <button type="submit" className="cd-btn cd-btn-primary" disabled={profileSaving}>
+                  {profileSaving ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewModal && (
+        <div className="cd-overlay" onClick={e => { if (e.target === e.currentTarget) setReviewModal(false); }}>
+          <div className="cd-modal">
+            <div className="cd-modal-head">
+              Write a Review
+              <button className="cd-modal-x" onClick={() => setReviewModal(false)}>×</button>
+            </div>
+            <form onSubmit={saveReview}>
+              <div className="cd-modal-body">
+                <div className="cd-field">
+                  <label className="cd-label">Your Name</label>
+                  <input className="cd-input" required value={reviewDraft.reviewName}
+                    onChange={e => setReviewDraft(d => ({ ...d, reviewName: e.target.value }))}
+                    placeholder="Name shown with review" />
+                </div>
+                <div className="cd-field">
+                  <label className="cd-label">Rating (0–5)</label>
+                  <select className="cd-input" value={reviewDraft.rating}
+                    onChange={e => setReviewDraft(d => ({ ...d, rating: e.target.value }))}>
+                    {[5,4,3,2,1,0].map(n => (
+                      <option key={n} value={n}>{"★".repeat(n)}{"☆".repeat(5-n)} ({n})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="cd-field">
+                  <label className="cd-label">Comment (optional)</label>
+                  <textarea className="cd-input cd-textarea" rows={4} value={reviewDraft.reviewComment}
+                    onChange={e => setReviewDraft(d => ({ ...d, reviewComment: e.target.value }))}
+                    placeholder="Share your experience…" />
+                </div>
+                {reviewErr && <div className="cd-form-err">{reviewErr}</div>}
+              </div>
+              <div className="cd-modal-foot">
+                <button type="button" className="cd-btn cd-btn-ghost" onClick={() => setReviewModal(false)} disabled={reviewSubmitting}>Cancel</button>
+                <button type="submit" className="cd-btn cd-btn-primary" disabled={reviewSubmitting}>
+                  {reviewSubmitting ? "Submitting…" : "Submit Review"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Installation Modal */}
+      {cancelModal && (
+        <div className="cd-overlay" onClick={e => { if (e.target === e.currentTarget) setCancelModal(null); }}>
+          <div className="cd-modal cd-modal-sm">
+            <div className="cd-modal-head">
+              Cancel Installation
+              <button className="cd-modal-x" onClick={() => setCancelModal(null)}>×</button>
+            </div>
+            <div className="cd-modal-body">
+              <p className="cd-modal-ctx">
+                Cancel installation <strong>#{cancelModal.installationid}</strong>
+                {cancelModal.siteaddress ? ` at ${cancelModal.siteaddress}` : ""}?
+                This will also remove all related service visits and assignments.
               </p>
+              <div className="cd-warning-box">
+                This action cannot be undone. The installation record and all associated data will be permanently deleted.
+              </div>
+              {cancelErr && <div className="cd-form-err">{cancelErr}</div>}
+            </div>
+            <div className="cd-modal-foot">
+              <button className="cd-btn cd-btn-ghost" onClick={() => setCancelModal(null)} disabled={cancelling}>Keep</button>
+              <button className="cd-btn cd-btn-danger-fill" onClick={confirmCancel} disabled={cancelling}>
+                {cancelling ? "Cancelling…" : "Cancel Installation"}
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <Navbar />
-
-      <div className="admin-dashboard client-dashboard-shell">
-        <div className="dashboard-container">
-          <h2 className="dashboard-title">Client Dashboard</h2>
-          <p className="client-subtitle">
-            Signed in as client <span className="client-id-pill">ID {clientId}</span>
-            {loading ? <span className="client-loading"> · Loading…</span> : null}
-          </p>
-
-          {loadError && (
-            <div className="client-banner error" role="alert">
-              {loadError}{" "}
-              <button type="button" className="link-button" onClick={loadDashboard}>
-                Retry
-              </button>
-            </div>
-          )}
-
-          <section className="dashboard-section">
-            <h3 className="section-title">Overview</h3>
-            <div className="overview-grid client-overview-grid">
-              <div className="stat-card">
-                <span className="stat-label">Active job</span>
-                <span className="stat-value client-stat-compact">
-                  {loading ? "…" : currentInstallation ? `#${currentInstallation.id}` : "—"}
-                </span>
-                {currentInstallation && (
-                  <span
-                    className={`activity-status ${statusBadgeClass(currentInstallation.status)}`}
-                  >
-                    {currentInstallation.status}
-                  </span>
-                )}
-              </div>
-              <div className="stat-card">
-                <span className="stat-label">Completed work</span>
-                <span className="stat-value">{loading ? "…" : completedCount}</span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-label">Total installations</span>
-                <span className="stat-value">{loading ? "…" : installations.length}</span>
-              </div>
-              <div className="stat-card">
-                <span className="stat-label">Pending payments</span>
-                <span className="stat-value">{loading ? "…" : pendingPaymentsCount}</span>
-              </div>
-            </div>
-          </section>
-
-          <section className="dashboard-section">
-            <h3 className="section-title">Profile</h3>
-            <div className="client-panel-card">
-              {!isEditingProfile ? (
-                <>
-                  <div className="client-profile-grid">
-                    <div className="client-field">
-                      <span className="client-field-label">Name</span>
-                      <span className="client-field-value">
-                        {[profile.fname, profile.name].filter(Boolean).join(" ") || "—"}
-                      </span>
-                    </div>
-                    <div className="client-field">
-                      <span className="client-field-label">Email</span>
-                      <span className="client-field-value">{profile.email || "—"}</span>
-                    </div>
-                    <div className="client-field">
-                      <span className="client-field-label">Phone</span>
-                      <span className="client-field-value">{profile.phone || "—"}</span>
-                    </div>
-                    <div className="client-field client-field-full">
-                      <span className="client-field-label">Address</span>
-                      <span className="client-field-value">{profile.address || "—"}</span>
-                    </div>
-                    {profile.customerType ? (
-                      <div className="client-field">
-                        <span className="client-field-label">Customer type</span>
-                        <span className="client-field-value">{profile.customerType}</span>
-                      </div>
-                    ) : null}
-                  </div>
-                  <button type="button" className="client-btn-primary" onClick={handleEditProfile}>
-                    Edit profile
-                  </button>
-                  {profileSaved && <p className="message-success">Profile saved.</p>}
-                </>
-              ) : (
-                <form className="profile-form client-profile-form" onSubmit={handleSaveProfile}>
-                  <div className="client-form-grid">
-                    <label>
-                      First name
-                      <input
-                        type="text"
-                        value={profileDraft.fname}
-                        onChange={(event) => {
-                          setProfileDraft({ ...profileDraft, fname: event.target.value });
-                          setProfileError("");
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Last name
-                      <input
-                        type="text"
-                        value={profileDraft.name}
-                        onChange={(event) => {
-                          setProfileDraft({ ...profileDraft, name: event.target.value });
-                          setProfileError("");
-                        }}
-                      />
-                    </label>
-                    <label className="client-field-full">
-                      Email
-                      <input
-                        type="email"
-                        value={profileDraft.email}
-                        onChange={(event) => {
-                          setProfileDraft({ ...profileDraft, email: event.target.value });
-                          setProfileError("");
-                        }}
-                      />
-                    </label>
-                    <label>
-                      Phone
-                      <input
-                        type="text"
-                        value={profileDraft.phone}
-                        onChange={(event) => {
-                          setProfileDraft({ ...profileDraft, phone: event.target.value });
-                          setProfileError("");
-                        }}
-                      />
-                    </label>
-                    <label className="client-field-full">
-                      Address
-                      <input
-                        type="text"
-                        value={profileDraft.address}
-                        onChange={(event) => {
-                          setProfileDraft({ ...profileDraft, address: event.target.value });
-                          setProfileError("");
-                        }}
-                      />
-                    </label>
-                  </div>
-                  {profileError && <p className="message-error">{profileError}</p>}
-                  <div className="profile-actions">
-                    <button type="submit" className="client-btn-primary" disabled={profileSaving}>
-                      {profileSaving ? "Saving…" : "Save"}
-                    </button>
-                    <button
-                      type="button"
-                      className="client-btn-secondary"
-                      onClick={handleCancelEditProfile}
-                      disabled={profileSaving}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </section>
-
-          <section className="dashboard-section">
-            <h3 className="section-title">Current job</h3>
-            <div className="client-panel-card">
-              {!currentInstallation ? (
-                <p className="client-muted">No installation data yet.</p>
-              ) : (
-                <>
-                  <div className="client-job-header">
-                    <div>
-                      <div className="client-job-title">Installation #{currentInstallation.id}</div>
-                      <div className="client-muted">
-                        {currentInstallation.description || "No description"}
-                      </div>
-                    </div>
-                    <span className={`activity-status ${statusBadgeClass(currentInstallation.status)}`}>
-                      {currentInstallation.status}
-                    </span>
-                  </div>
-                  <div className="client-job-meta">
-                    <span>
-                      <strong>Site</strong> {currentInstallation.address || "—"}
-                    </span>
-                    <span>
-                      <strong>Scheduled</strong> {String(currentInstallation.scheduledDate || "—")}
-                    </span>
-                  </div>
-                  <div className="progress-track client-progress-track">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${statusToProgress(currentInstallation.status)}%` }}
-                    />
-                  </div>
-                  <p className="progress-text client-progress-label">
-                    {statusToProgress(currentInstallation.status)}% complete (estimated from status)
-                  </p>
-                  <button
-                    type="button"
-                    className="client-btn-secondary"
-                    onClick={() => handleOpenDetail(currentInstallation.id)}
-                  >
-                    View full details
-                  </button>
-                </>
-              )}
-            </div>
-          </section>
-
-          <section className="dashboard-section">
-            <h3 className="section-title">Work history</h3>
-            {!historyRows.length ? (
-              <div className="client-panel-card">
-                <p className="client-muted">No past installations to show.</p>
-              </div>
-            ) : (
-              <div className="client-table-wrap">
-                <table className="client-data-table">
-                  <thead>
-                    <tr>
-                      <th>Installation</th>
-                      <th>Description</th>
-                      <th>Completed</th>
-                      <th>Status</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historyRows.map((work) => (
-                      <tr key={work.id}>
-                        <td>{work.id}</td>
-                        <td>{work.description || "—"}</td>
-                        <td>{String(work.completedDate || "—")}</td>
-                        <td>
-                          <span className={`activity-status ${statusBadgeClass(work.status)}`}>
-                            {work.status || "—"}
-                          </span>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="link-button"
-                            onClick={() => handleOpenDetail(work.id)}
-                          >
-                            Details
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          {(detailLoading || detailError || installationDetail) && (
-            <section className="dashboard-section">
-              <h3 className="section-title">Installation detail</h3>
-              <div className="client-panel-card">
-                {detailLoading && <p className="client-muted">Loading detail…</p>}
-                {detailError && <p className="message-error">{detailError}</p>}
-                {installationDetail && !detailLoading && (
-                  <pre className="detail-json">{JSON.stringify(installationDetail, null, 2)}</pre>
-                )}
-              </div>
-            </section>
-          )}
-
-          <section className="dashboard-section">
-            <h3 className="section-title">Payments</h3>
-            {!payments.length ? (
-              <div className="client-panel-card">
-                <p className="client-muted">No payments on file.</p>
-              </div>
-            ) : (
-              <div className="client-table-wrap">
-                <table className="client-data-table">
-                  <thead>
-                    <tr>
-                      <th>Payment ID</th>
-                      <th>Status</th>
-                      <th>Due</th>
-                      <th>Created</th>
-                      <th>Amount</th>
-                      <th>Type</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {payments.map((p) => (
-                      <tr key={p.id || `${p.createDate}-${p.totalAmount}`}>
-                        <td>{p.id || "—"}</td>
-                        <td>
-                          <span className={`activity-status ${statusBadgeClass(p.status)}`}>
-                            {p.status || "—"}
-                          </span>
-                        </td>
-                        <td>{String(p.dueDate || "—")}</td>
-                        <td>{String(p.createDate || "—")}</td>
-                        <td>{p.totalAmount !== "" ? String(p.totalAmount) : "—"}</td>
-                        <td>{p.paymentType || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          <section className="dashboard-section client-reviews-dashboard-section">
-            <h3 className="section-title">Your reviews</h3>
-            <div className="client-panel-card client-reviews-card">
-              <p className="client-reviews-intro">
-                Share feedback linked to your account. Your team sees it on the admin reviews page;
-                the review date is set automatically when you submit.
-              </p>
-
-              <div className="client-reviews-block">
-                <h4 className="client-reviews-subtitle">Past reviews</h4>
-                {myReviews.length > 0 ? (
-                  <ul className="client-review-list">
-                    {myReviews.map((r) => (
-                      <li key={r.id} className="client-review-item">
-                        <div className="client-review-item-top">
-                          <span className="client-review-display-name">
-                            {r.reviewName || "Review"}
-                          </span>
-                          <time
-                            className="client-review-date-badge"
-                            dateTime={String(r.reviewDate || "")}
-                          >
-                            {formatReviewDate(r.reviewDate)}
-                          </time>
-                        </div>
-                        <div className="client-review-rating-row" aria-label={`${r.rating} out of 5 stars`}>
-                          <span className="client-review-stars" aria-hidden>
-                            {"★".repeat(Math.min(5, Math.max(0, r.rating)))}
-                          </span>
-                          <span className="client-review-rating-label">{r.rating} / 5</span>
-                        </div>
-                        {r.reviewComment ? (
-                          <blockquote className="client-review-comment">{r.reviewComment}</blockquote>
-                        ) : (
-                          <p className="client-review-no-comment">No written comment</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="client-reviews-empty">
-                    <p>You haven&apos;t submitted a review yet.</p>
-                    <span className="client-reviews-empty-hint">
-                      Use the form below when you&apos;re ready.
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="client-review-compose">
-                <h4 className="client-reviews-subtitle">Write a new review</h4>
-                <form className="client-review-form" onSubmit={handleSubmitReview}>
-                  <div className="client-review-form-grid">
-                    <label className="client-review-label">
-                      <span className="client-review-label-text">Name to display</span>
-                      <input
-                        type="text"
-                        className="client-review-input"
-                        maxLength={100}
-                        value={reviewName}
-                        onChange={(e) => {
-                          setReviewName(e.target.value);
-                          setReviewError("");
-                          setReviewSuccess(false);
-                        }}
-                        placeholder="How you'd like to appear publicly"
-                        required
-                      />
-                    </label>
-                    <label className="client-review-label client-review-label-rating">
-                      <span className="client-review-label-text">Rating</span>
-                      <select
-                        className="client-review-select"
-                        value={reviewRating}
-                        onChange={(e) => {
-                          setReviewRating(e.target.value);
-                          setReviewError("");
-                          setReviewSuccess(false);
-                        }}
-                      >
-                        <option value="5">5 — Excellent</option>
-                        <option value="4">4 — Good</option>
-                        <option value="3">3 — Okay</option>
-                        <option value="2">2 — Poor</option>
-                        <option value="1">1 — Very poor</option>
-                        <option value="0">0 — Lowest</option>
-                      </select>
-                    </label>
-                    <label className="client-review-label client-review-label-full">
-                      <span className="client-review-label-text">Comment (optional)</span>
-                      <textarea
-                        rows={4}
-                        value={reviewComment}
-                        onChange={(e) => {
-                          setReviewComment(e.target.value);
-                          setReviewError("");
-                          setReviewSuccess(false);
-                        }}
-                        placeholder="Installation experience, support, quality — anything that helps us improve."
-                        className="client-textarea client-review-textarea"
-                      />
-                    </label>
-                  </div>
-                  {reviewError && <p className="message-error client-review-feedback">{reviewError}</p>}
-                  {reviewSuccess && (
-                    <p className="message-success client-review-feedback">
-                      Thanks — your review was saved.
-                    </p>
-                  )}
-                  <div className="client-review-actions">
-                    <button type="submit" className="client-btn-primary" disabled={reviewSubmitting}>
-                      {reviewSubmitting ? "Submitting…" : "Submit review"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </section>
-
-          <section className="dashboard-section">
-            <h3 className="section-title">Message admin</h3>
-            <div className="client-panel-card">
-              <form onSubmit={handleSubmitMessage} className="message-form client-message-form">
-                <textarea
-                  rows={5}
-                  value={message}
-                  onChange={(event) => {
-                    setMessage(event.target.value);
-                    setMessageSent(false);
-                  }}
-                  placeholder="Write your message to the admin team…"
-                  className="message-textarea client-textarea"
-                />
-                <button type="submit" className="client-btn-primary">
-                  Send message
-                </button>
-                {messageSent && (
-                  <p className="message-success">
-                    Message not sent to the server yet — wire up your team&apos;s message endpoint
-                    when ready.
-                  </p>
-                )}
-              </form>
-            </div>
-          </section>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

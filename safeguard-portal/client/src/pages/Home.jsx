@@ -1,4 +1,5 @@
 import "./Home.css";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
 import navLogo from "../assets/nav-logo.png";
@@ -51,25 +52,39 @@ const reviews = [
 ];
 
 export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div className="home">
-      {/* ----- NAVBAR (sticky) ----- */}
-      <nav className="home-nav">
+      <nav className={`home-nav${scrolled ? " nav-scrolled" : ""}`}>
         <div className="home-nav-inner">
-          <Link to="/" className="home-nav-brand">
+          <Link to="/" className="home-nav-brand" onClick={() => setMenuOpen(false)}>
             <img src={navLogo} alt="" className="nav-logo" />
             <span className="nav-brand-text">SafeGuard Solutions</span>
           </Link>
-          <div className="home-nav-links">
-            <Link to="/">Home</Link>
-            <span className="nav-sep">|</span>
-            <a href="#services">Services</a>
-            <span className="nav-sep">|</span>
-            <Link to="/client/dashboard">Clients</Link>
-            <span className="nav-sep">|</span>
-            <a href="#about">About</a>
-            <span className="nav-sep">|</span>
-            <Link to="/login">Login</Link>
+
+          <button
+            className={`nav-hamburger${menuOpen ? " open" : ""}`}
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+          >
+            <span /><span /><span />
+          </button>
+
+          <div className={`home-nav-links${menuOpen ? " nav-open" : ""}`}>
+            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            <a href="#services" onClick={() => setMenuOpen(false)}>Services</a>
+            <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
+            <Link to="/client/login" onClick={() => setMenuOpen(false)}>Client Portal</Link>
+            <Link to="/employee/login" className="nav-link-pill" onClick={() => setMenuOpen(false)}>Employee Portal</Link>
+            <Link to="/login" className="nav-link-pill nav-link-pill-dark" onClick={() => setMenuOpen(false)}>Admin</Link>
           </div>
         </div>
       </nav>
