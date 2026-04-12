@@ -300,34 +300,47 @@ export async function updateClient(req, res) {
     }
 }
 
-export async function getEmployeesAllSkills(req, res) {
+export async function getInstallations(req, res) {
     try {
         const result = await pool.query(`
-            SELECT e.employeeid, e.fname, e.lname, e.wage, e.email, e.phonenum,
-                ARRAY_AGG(es.skill) AS skills
-            FROM employee e
-            JOIN employeeskill es ON e.employeeid = es.employeeid
-            WHERE NOT EXISTS (
-                SELECT skill FROM (VALUES 
-                    ('Camera Installation'), 
-                    ('Alarm Systems'), 
-                    ('Access Control'), 
-                    ('Network Setup')
-                ) AS required_skills(skill)
-                EXCEPT
-                SELECT skill FROM employeeskill WHERE employeeid = e.employeeid
-            )
-            GROUP BY e.employeeid, e.fname, e.lname, e.wage, e.email, e.phonenum
+            SELECT * FROM installation
+            ORDER BY scheduleddate DESC
         `)
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'No employees with all skills found' })
-        }
-
         res.json(result.rows)
     } catch (err) {
         console.error(err)
-        res.status(500).json({ error: 'Failed to fetch employees' })
+        res.status(500).json({ error: 'Failed to fetch installations' })
+    }
+}
+
+export async function updateInstallationStatus(req, res) {
+    const { installationid, status } = req.body
+    
+    try {
+        let query = 'UPDATE installation SET status = $1';
+        const params = [status];
+        
+        // If status is "Completed", set the completeddate to today
+        if (status === 'Completed') {
+            query += ', completeddate = CURRENT_DATE';
+        }
+        
+        query += ' WHERE installationid = $2 RETURNING *';
+        params.push(installationid);
+        
+        const result = await pool.query(query, params);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Installation not found' });
+        }
+        
+        res.json({ 
+            message: 'Installation status updated successfully',
+            installation: result.rows[0]
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update installation status' });
     }
 }
 

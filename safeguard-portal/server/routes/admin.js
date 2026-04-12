@@ -3,7 +3,8 @@ import {
     deleteEmployee, getEmployees, addEmployee, updateEmployee,
     addInventory, deleteInventory, updateInventory, getInventory,
     updateQuoteRequest, deleteQuoteRequest,
-    getClients, addClient, deleteClient, updateClient, getReviews, getEmployeesAllSkills
+    getClients, addClient, deleteClient, updateClient, getReviews,
+    getInstallations, updateInstallationStatus
 } from '../controllers/adminController.js';
 
 
@@ -34,5 +35,8 @@ adminRouter.put('/updateClient', updateClient)
 adminRouter.delete('/deleteClient', deleteClient)
 adminRouter.get('/employeesAllSkills', getEmployeesAllSkills)
 
+// Installation routes
+adminRouter.get('/getInstallations', getInstallations)
+adminRouter.put('/updateInstallationStatus', updateInstallationStatus)
 
 
