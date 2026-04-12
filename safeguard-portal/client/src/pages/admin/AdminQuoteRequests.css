@@ -1,198 +1,44 @@
-.Admin-Dashboard {
-    background-color: #dcd8cc;
-    height: 100%;
-    overflow-x: auto;
+.quote-requests-table {
+  min-width: 960px;
 }
 
-.Inventory-Table {
-    border-radius: 10px;
-    background-color: white;
-    margin-left: 40px;
-    margin-right: 40px;
-    overflow-x: auto;
+.adm-cell-clip {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
 }
 
-.Inventory-Header {
-    display: grid;
-    grid-template-columns: 1.2fr 1.3fr 1.1fr 1.5fr 2fr 0.8fr;
-    min-width: 900px;
-    height: 60px;
-    padding-left: 40px;
-    padding-right: 40px;
-    background-color: #fafafa;
-    color: #888888;
-    border: 0.5px solid rgba(0, 0, 0, 0.07);
-    border-radius: 10px 10px 0 0;
-    align-items: center;
+.adm-notes-preview {
+  font-size: 13px;
+  color: #444;
 }
 
-.quote-request-row {
-    display: grid;
-    grid-template-columns: 1.3fr 1.4fr 1fr 1fr 2.3fr 1.05fr;
-    min-width: 900px;
-    align-items: center;
-    border: 0.5px solid rgba(0, 0, 0, 0.07);
-    transition: background-color 0.2s ease;
-    min-height: 60px;
+.quote-status-pill {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid #e0dcd6;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
 }
 
-.quote-request-row:hover {
-    background-color: #fafafa;
+.quote-status-pill.open {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
 }
 
-.quote-request-row > h4 {
-    margin-left: 40px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.quote-status-pill.done {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
 }
 
-.col-email,
-.col-location,
-.col-address {
-    padding-left: 0px;
-    overflow: hidden;
-}
-
-.col-notes,
-.col-status {
-    padding-left: 5px;
-    overflow: hidden;
-}
-
-.col-email p,
-.col-location p,
-.col-address p {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.col-notes {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    padding-right: 40px;
-    padding-left: 40px;
-}
-
-.page-header > .header-title > h2 {
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
-.page-header > .header-title > p {
-    font-size: 1rem;
-    color: #666;
-    margin-top: 4px;
-}
-
-.notes-preview {
-    font-size: 0.9rem;
-    color: #555;
-    font-weight: 400;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 200px;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.status-badge.pending {
-    background-color: #fef3c7;
-    color: #d97706;
-}
-
-.status-badge.completed {
-    background-color: #dcfce7;
-    color: #16a34a;
-}
-
-/* Modal Styles */
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal {
-    width: 40rem;
-    max-width: 90vw;
-    background-color: white;
-    padding: 30px;
-    border-radius: 10px;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid lightgray;
-    justify-content: space-between;
-    padding: 10px;
-    margin-bottom: 20px;
-}
-
-.modal-header > h1 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #111;
-}
-
-.modal-header > button {
-    background: none;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    font-size: 1rem;
-    cursor: pointer;
-    color: #888;
-    line-height: 1;
-    padding: 5px 10px;
-}
-
-.modal-notes-content {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.modal-notes-content p {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    color: #333;
-    word-wrap: break-word;
-}
-
-/* View Notes Button */
-.view-notes-btn {
-    background: transparent;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    color: #555;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.view-notes-btn:hover {
-    background-color: #dcd8cc;
+.quote-status-pill:hover {
+  filter: brightness(0.98);
 }

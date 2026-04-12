@@ -1,4 +1,4 @@
-import './AdminClients.css'
+import './adminShared.css'
 import { API_BASE } from '../../config/apiBase.js'
 
 import { useState, useEffect } from 'react'
@@ -146,43 +146,49 @@ export default function AdminClients() {
     return (
         <div>
             {showModal && (
-                <div className='overlay'>
-                    <div className='modal'>
-                        <div className='add-header'>
-                            <h1>{modalMode === 'edit' ? 'Edit Client' : 'Add Client'}</h1>
-                            <button onClick={() => setShowModal(false)}>x</button>
+                <div className="overlay" onClick={() => setShowModal(false)}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{modalMode === 'edit' ? 'Edit Client' : 'Add Client'}</h2>
+                            <button type="button" className="modal-close" onClick={() => setShowModal(false)} aria-label="Close">×</button>
                         </div>
                         <form onSubmit={modalMode === 'edit' ? updateClient : handleAddClient}>
-                            <div className='name-fields'>
-                                <div>
-                                    <h3>FIRST NAME</h3>
-                                    <input type="text" name="firstName" placeholder="eg. Alice" defaultValue={modalMode === 'edit' ? selectedClient?.fname : ''} required />
+                            <div className="modal-body">
+                                <div className="form-row">
+                                    <div className="form-field">
+                                        <label className="form-label">First Name</label>
+                                        <input className="form-input" type="text" name="firstName" placeholder="Alice" defaultValue={modalMode === 'edit' ? selectedClient?.fname : ''} required />
+                                    </div>
+                                    <div className="form-field">
+                                        <label className="form-label">Last Name</label>
+                                        <input className="form-input" type="text" name="lastName" placeholder="Wong" defaultValue={modalMode === 'edit' ? selectedClient?.lname : ''} required />
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3>LAST NAME</h3>
-                                    <input type="text" name="lastName" placeholder="eg. Wong" defaultValue={modalMode === 'edit' ? selectedClient?.lname : ''} required />
+                                <div className="form-field full">
+                                    <label className="form-label">Email</label>
+                                    <input className="form-input" type="email" name="email" placeholder="alice@example.com" defaultValue={modalMode === 'edit' ? selectedClient?.email : ''} required />
+                                </div>
+                                <div className="form-row">
+                                    <div className="form-field">
+                                        <label className="form-label">Phone</label>
+                                        <input className="form-input" type="text" name="phone" placeholder="6041234567" defaultValue={modalMode === 'edit' ? selectedClient?.phone : ''} required />
+                                    </div>
+                                    <div className="form-field">
+                                        <label className="form-label">Customer Type</label>
+                                        <select className="form-select" name="customertype" defaultValue={modalMode === 'edit' ? selectedClient?.customertype : 'Residential'} required>
+                                            <option value="Residential">Residential</option>
+                                            <option value="Commercial">Commercial</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="form-field full">
+                                    <label className="form-label">Billing Address</label>
+                                    <input className="form-input" type="text" name="billingaddress" placeholder="123 Main St, Vancouver, BC" defaultValue={modalMode === 'edit' ? selectedClient?.billingaddress : ''} />
                                 </div>
                             </div>
-                            <h3>EMAIL</h3>
-                            <input className='email-input' type="text" name="email" placeholder="eg. alice@wong.com" defaultValue={modalMode === 'edit' ? selectedClient?.email : ''} required />
-                            <div className='phoneNwage'>
-                                <div>
-                                    <h3>PHONE</h3>
-                                    <input type="text" name="phone" placeholder="eg. 6041234567" defaultValue={modalMode === 'edit' ? selectedClient?.phone : ''} required />
-                                </div>
-                                <div>
-                                    <h3>TYPE</h3>
-                                    <select name="customertype" defaultValue={modalMode === 'edit' ? selectedClient?.customertype : 'Residential'} required>
-                                        <option value="Residential">Residential</option>
-                                        <option value="Commercial">Commercial</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <h3>BILLING ADDRESS</h3>
-                            <input className='email-input' type="text" name="billingaddress" placeholder="eg. 123 Main St" defaultValue={modalMode === 'edit' ? selectedClient?.billingaddress : ''} />
-                            <div className='form-buttons'>
-                                <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit">{modalMode === 'edit' ? 'Edit Client' : 'Add Client'}</button>
+                            <div className="modal-footer">
+                                <button type="button" className="clients-btn-edit" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="submit" className="clients-btn-primary">{modalMode === 'edit' ? 'Save Changes' : 'Add Client'}</button>
                             </div>
                         </form>
                     </div>
@@ -191,13 +197,12 @@ export default function AdminClients() {
             <div className="clients-page">
                 <div className="clients-main">
 
-                    {/* Page header */}
                     <div className="clients-page-header">
                         <div>
                             <h1 className="clients-page-title">Clients</h1>
                             <p className="clients-page-sub">Manage your clients</p>
                         </div>
-                        <button onClick={() => { setShowModal(true) }} className="clients-add-btn">
+                        <button type="button" onClick={() => { setModalMode('add'); setSelectedClient(null); setShowModal(true); }} className="clients-add-btn">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <path d="M12 5v14M5 12h14" />
                             </svg>
@@ -205,7 +210,6 @@ export default function AdminClients() {
                         </button>
                     </div>
 
-                    {/* Toolbar */}
                     <div className="clients-toolbar">
                         <div className="clients-search-wrap">
                             <svg className="clients-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -232,7 +236,6 @@ export default function AdminClients() {
                         </div>
                     </div>
 
-                    {/* Card list */}
                     <div className="clients-card-list">
                         {filtered.length === 0 ? (
                             <div className="clients-empty">No clients found.</div>
@@ -245,14 +248,13 @@ export default function AdminClients() {
                                         className={`clients-card${isOpen ? " open" : ""}`}
                                         onClick={() => toggle(client.clientid)}
                                     >
-                                        {/* Card row */}
                                         <div className="clients-card-row">
                                             <div className="clients-avatar">
                                                 {getInitials(client.fname, client.lname)}
                                             </div>
                                             <div className="clients-card-info">
                                                 <div className="clients-card-name">{client.fname} {client.lname}</div>
-                                                <div className="clients-card-email">{client.email}</div>
+                                                <div className="clients-card-sub">{client.email}</div>
                                             </div>
                                             <span className={`clients-badge ${client.customertype === "Commercial" ? "commercial" : "residential"}`}>
                                                 {client.customertype}
@@ -266,7 +268,6 @@ export default function AdminClients() {
                                             </svg>
                                         </div>
 
-                                        {/* Expanded details */}
                                         {isOpen && (
                                             <div onClick={(e) => e.stopPropagation()}>
                                                 <div className="clients-detail-grid">
@@ -299,7 +300,6 @@ export default function AdminClients() {
                         )}
                     </div>
 
-                    {/* Footer */}
                     <div className="clients-footer">
                         Showing {filtered.length} of {clients.length} clients
                     </div>

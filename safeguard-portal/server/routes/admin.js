@@ -4,7 +4,8 @@ import {
     addInventory, deleteInventory, updateInventory, getInventory,
     updateQuoteRequest, deleteQuoteRequest,
     getClients, addClient, deleteClient, updateClient, getReviews,
-    getInstallations, updateInstallationStatus
+    getInstallations, updateInstallationStatus,
+    getEmployeesAllSkills
 } from '../controllers/adminController.js';
 
 

@@ -1,0 +1,86 @@
+.admin-layout-root {
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-layout-root .admin-sub-navbar {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  gap: clamp(10px, 2.2vw, 36px);
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
+  max-width: 100%;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.admin-layout-root .admin-sub-navbar::-webkit-scrollbar {
+  height: 5px;
+}
+
+.admin-layout-root .admin-sub-navbar::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.admin-layout-root .clients-page {
+  width: 100%;
+  min-width: 0;
+  overflow-x: visible;
+  box-sizing: border-box;
+}
+
+.admin-layout-root .clients-main {
+  max-width: min(1180px, 100%);
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-layout-root .adm-table-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.admin-layout-root .adm-table-wrap {
+  max-width: none;
+  min-width: 0;
+}
+
+.admin-layout-root .adm-filter-bar {
+  min-width: 0;
+}
+
+.admin-layout-root .adm-filter-bar .clients-search-wrap {
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.admin-layout-root .clients-summary-strip {
+  min-width: 0;
+}
+
+.admin-layout-root .clients-summary-strip > * {
+  min-width: 0;
+}
+
+.admin-layout-root .clients-toolbar {
+  min-width: 0;
+}
+
+.admin-layout-root .adm-activity-grid {
+  min-width: 0;
+}

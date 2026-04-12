@@ -1,243 +1,213 @@
 import '../../index.css'
+import './adminShared.css'
 import './AdminDashboard.css'
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../../config/apiBase.js'
 
 export default function AdminDashboard() {
-  // State for API data
-  const [clients, setClients] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [installations, setInstallations] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [clients, setClients] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [installations, setInstallations] = useState([])
+  const [payments, setPayments] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // Fetch data from backend APIs
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        console.log('Starting data fetch...');
-
-        // Fetch all endpoints separately to handle individual failures
-        const clientsRes = await fetch(`${API_BASE}/api/clients`);
-        const employeesRes = await fetch(`${API_BASE}/api/employees`);
-        const installationsRes = await fetch(`${API_BASE}/api/installations`);
-        const paymentsRes = await fetch(`${API_BASE}/api/payments`);
-
-        console.log('Responses received:', {
-          clients: clientsRes,
-          employees: employeesRes,
-          installations: installationsRes,
-          payments: paymentsRes
-        });
-
-        // Parse JSON responses individually - if one fails, others still work
-        const clientsData = clientsRes.ok ? await clientsRes.json() : [];
-        const employeesData = employeesRes.ok ? await employeesRes.json() : [];
-        const installationsData = installationsRes.ok ? await installationsRes.json() : [];
-        const paymentsData = paymentsRes.ok ? await paymentsRes.json() : [];
-
-        console.log('Parsed data:', {
-          clients: clientsData,
-          employees: employeesData,
-          installations: installationsData,
-          payments: paymentsData
-        });
-
-        // Verify data structure
-        console.log('Data types and lengths:', {
-          clients: { type: Array.isArray(clientsData) ? 'array' : typeof clientsData, length: Array.isArray(clientsData) ? clientsData.length : 'N/A' },
-          employees: { type: Array.isArray(employeesData) ? 'array' : typeof employeesData, length: Array.isArray(employeesData) ? employeesData.length : 'N/A' },
-          installations: { type: Array.isArray(installationsData) ? 'array' : typeof installationsData, length: Array.isArray(installationsData) ? installationsData.length : 'N/A' },
-          payments: { type: Array.isArray(paymentsData) ? 'array' : typeof paymentsData, length: Array.isArray(paymentsData) ? paymentsData.length : 'N/A' }
-        });
-
-        // Update state
-        setClients(clientsData);
-        setEmployees(employeesData);
-        setInstallations(installationsData);
-        setPayments(paymentsData);
-
+        setLoading(true)
+        setError(null)
+        const [clientsRes, employeesRes, installationsRes, paymentsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/clients`),
+          fetch(`${API_BASE}/api/employees`),
+          fetch(`${API_BASE}/api/installations`),
+          fetch(`${API_BASE}/api/payments`),
+        ])
+        setClients(clientsRes.ok ? await clientsRes.json() : [])
+        setEmployees(employeesRes.ok ? await employeesRes.json() : [])
+        setInstallations(installationsRes.ok ? await installationsRes.json() : [])
+        setPayments(paymentsRes.ok ? await paymentsRes.json() : [])
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err.message);
+        setError(err.message)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
+    fetchData()
+  }, [])
 
-    fetchData();
-  }, []);
+  const upcomingInstallations = installations.filter(i => i.status === 'Scheduled').length
+  const completedInstallations = installations.filter(i => i.status === 'Completed').length
 
-  // Calculate statistics from real data
-  const upcomingInstallations = installations.filter(
-    i => i.status === 'Scheduled'
-  ).length;
-
-  const completedInstallations = installations.filter(
-    i => i.status === 'Completed'
-  ).length;
-
-  // Compute financial data from payments API
   const totalRevenue = payments
     .filter(p => p.status === 'Paid')
-    .reduce((sum, p) => sum + Number(p.totalamount), 0);
+    .reduce((sum, p) => sum + Number(p.totalamount), 0)
 
-  const pendingCount = payments.filter(p => p.status === 'Pending').length;
-  const overdueCount = payments.filter(p => p.status === 'Overdue').length;
+  const pendingCount = payments.filter(p => p.status === 'Pending').length
+  const overdueCount = payments.filter(p => p.status === 'Overdue').length
 
-  // Financial summary with computed values
-  const financialSummary = [
-    { label: 'Revenue This Month', value: `$${totalRevenue.toLocaleString()}`, color: '#4caf50' },
-    { label: 'Overdue Payments', value: overdueCount, color: '#f44336' },
-    { label: 'Pending Payments', value: pendingCount, color: '#ff9800' }
-  ];
-
-  // Dynamic recent activity from real data
   const recentInstallations = [...installations]
     .sort((a, b) => new Date(b.scheduleddate) - new Date(a.scheduleddate))
-    .slice(0, 3);
+    .slice(0, 4)
 
   const recentPayments = [...payments]
     .sort((a, b) => new Date(b.createdate) - new Date(a.createdate))
-    .slice(0, 3);
+    .slice(0, 4)
+
+  function statusClass(status) {
+    const s = String(status || '').toLowerCase().replace(/\s+/g, '-')
+    if (s.includes('complete')) return 'clients-badge completed'
+    if (s.includes('schedule')) return 'clients-badge scheduled'
+    if (s.includes('pending')) return 'clients-badge pending'
+    if (s.includes('progress')) return 'clients-badge followup'
+    return 'clients-skill-tag'
+  }
+
+  if (loading) {
+    return (
+      <div className="clients-page">
+        <div className="clients-main">
+          <div className="adm-state">Loading dashboard…</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="admin-dashboard">
-      <div className="dashboard-container">
-        <h2 className="dashboard-title">Admin Dashboard</h2>
-        
-        {/* Overview Section */}
-        <section className="dashboard-section">
-          <h3 className="section-title">Overview</h3>
-          <div className="overview-grid">
-            <div className="stat-card">
-              <span className="stat-label">Total Clients</span>
-              <span className="stat-value">{loading ? 'Loading...' : clients.length}</span>
-            </div>
+    <div className="clients-page">
+      <div className="clients-main">
+        <div className="clients-page-header">
+          <div>
+            <h1 className="clients-page-title">Dashboard</h1>
+            <p className="clients-page-sub">Overview of clients, jobs, and payments</p>
+          </div>
+        </div>
 
-            <div className="stat-card">
-              <span className="stat-label">Total Employees</span>
-              <span className="stat-value">{loading ? 'Loading...' : employees.length}</span>
-            </div>
+        {error && (
+          <div className="adm-state adm-state-error" role="alert">
+            {error}
+          </div>
+        )}
 
-            <div className="stat-card">
-              <span className="stat-label">Upcoming Installations</span>
-              <span className="stat-value">{loading ? 'Loading...' : upcomingInstallations}</span>
+        <section className="adm-section" aria-labelledby="overview-heading">
+          <h2 id="overview-heading" className="adm-section-title">Overview</h2>
+          <div className="clients-summary-strip">
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Clients</div>
+              <div className="clients-stat-value">{clients.length}</div>
             </div>
-
-            <div className="stat-card">
-              <span className="stat-label">Completed Installations</span>
-              <span className="stat-value">{loading ? 'Loading...' : completedInstallations}</span>
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Employees</div>
+              <div className="clients-stat-value">{employees.length}</div>
+            </div>
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Scheduled</div>
+              <div className="clients-stat-value adm-stat-warn">{upcomingInstallations}</div>
+            </div>
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Completed jobs</div>
+              <div className="clients-stat-value adm-stat-pos">{completedInstallations}</div>
             </div>
           </div>
         </section>
 
-        {/* Financial Summary Section */}
-        <section className="dashboard-section">
-          <h3 className="section-title">Financial Summary</h3>
-          <div className="financial-grid">
-            {financialSummary.map((item, index) => (
-              <div key={index} className="financial-card">
-                <span className="financial-label">{item.label}</span>
-                <span className={`financial-value ${item.label.toLowerCase().replace(/\s+/g, '-')}-color`}>
-                  {item.value}
-                </span>
+        <section className="adm-section" aria-labelledby="financial-heading">
+          <h2 id="financial-heading" className="adm-section-title">Payments</h2>
+          <div className="clients-summary-strip cols-3">
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Recorded revenue (paid)</div>
+              <div className="clients-stat-value adm-stat-pos">${totalRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+            </div>
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Pending</div>
+              <div className="clients-stat-value adm-stat-warn">{pendingCount}</div>
+            </div>
+            <div className="clients-stat-card">
+              <div className="clients-stat-label">Overdue</div>
+              <div className="clients-stat-value adm-stat-neg">{overdueCount}</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="adm-section" aria-labelledby="filters-heading">
+          <h2 id="filters-heading" className="adm-section-title">Report filters</h2>
+          <div className="adm-panel">
+            <div className="adm-panel-row">
+              <div className="adm-panel-field">
+                <label className="form-label" htmlFor="dash-month">Month</label>
+                <select id="dash-month" className="form-select" defaultValue="current" aria-label="Month filter">
+                  <option value="current">Current month</option>
+                  <option value="q1">Q1</option>
+                  <option value="q2">Q2</option>
+                  <option value="q3">Q3</option>
+                  <option value="q4">Q4</option>
+                </select>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Filter Bar Section */}
-        <section className="dashboard-section">
-          <h3 className="section-title">Filters</h3>
-          <div className="filter-container">
-            <div className="filter-group">
-              <label className="filter-label">Month</label>
-              <select className="filter-select">
-                <option value="current">Current Month</option>
-                <option value="january">January</option>
-                <option value="february">February</option>
-                <option value="march">March</option>
-                <option value="april">April</option>
-                <option value="may">May</option>
-                <option value="june">June</option>
-                <option value="july">July</option>
-                <option value="august">August</option>
-                <option value="september">September</option>
-                <option value="october">October</option>
-                <option value="november">November</option>
-                <option value="december">December</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label className="filter-label">Payment Status</label>
-              <select className="filter-select">
-                <option value="all">All</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
-                <option value="overdue">Overdue</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        {/* Recent Activity Section */}
-        <section className="dashboard-section">
-          <h3 className="section-title">Recent Activity</h3>
-          <div className="activity-grid">
-            {/* Recent Installations */}
-            <div className="activity-card">
-              <h4 className="activity-header">Recent Installations</h4>
-              <div className="activity-list">
-                {recentInstallations.map((install, index) => (
-                  <div key={index} className="activity-item">
-                    <div>
-                      <div className="activity-client">{install.client || 'Unknown Client'}</div>
-                      <div className="activity-id">{install.installationid || 'N/A'}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div className={`activity-status status-${install.status.toLowerCase().replace(' ', '-')}`}>
-                        {install.status}
-                      </div>
-                      <div className="activity-date">
-                        {install.scheduleddate ? new Date(install.scheduleddate).toLocaleDateString() : 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="adm-panel-field">
+                <label className="form-label" htmlFor="dash-pay-status">Payment status</label>
+                <select id="dash-pay-status" className="form-select" defaultValue="all" aria-label="Payment status filter">
+                  <option value="all">All</option>
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="overdue">Overdue</option>
+                </select>
               </div>
             </div>
+          </div>
+        </section>
 
-            {/* Recent Payments */}
-            <div className="activity-card">
-              <h4 className="activity-header">Recent Payments</h4>
-              <div className="activity-list">
-                {recentPayments.map((payment, index) => (
-                  <div key={index} className="activity-item">
-                    <div>
-                      <div className="activity-client">{payment.client || 'Unknown Client'}</div>
-                      <div className="activity-id">{payment.paymentid || 'N/A'}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div className="activity-value">
-                        ${Number(payment.totalamount || 0).toLocaleString()}
+        <section className="adm-section" aria-labelledby="activity-heading">
+          <h2 id="activity-heading" className="adm-section-title">Recent activity</h2>
+          <div className="adm-activity-grid">
+            <div className="clients-stat-card" style={{ textAlign: 'left' }}>
+              <div className="adm-activity-card-title">Installations</div>
+              <div className="adm-activity-stack">
+                {recentInstallations.length === 0 ? (
+                  <span className="adm-muted-inline">No installations yet.</span>
+                ) : (
+                  recentInstallations.map((inst, index) => (
+                    <div key={inst.installationid ?? index} className="adm-activity-item">
+                      <div>
+                        <div style={{ fontWeight: 500, fontSize: 13 }}>{inst.client || 'Client'}</div>
+                        <div className="adm-mono" style={{ marginTop: 2 }}>#{inst.installationid ?? '—'}</div>
                       </div>
-                      <div className="activity-date">
-                        {payment.createdate ? new Date(payment.createdate).toLocaleDateString() : 'N/A'}
+                      <div className="adm-activity-meta">
+                        <span className={statusClass(inst.status)}>{inst.status}</span>
+                        <div style={{ marginTop: 4 }}>
+                          {inst.scheduleddate ? new Date(inst.scheduleddate).toLocaleDateString() : '—'}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="clients-stat-card" style={{ textAlign: 'left' }}>
+              <div className="adm-activity-card-title">Payments</div>
+              <div className="adm-activity-stack">
+                {recentPayments.length === 0 ? (
+                  <span className="adm-muted-inline">No payments yet.</span>
+                ) : (
+                  recentPayments.map((payment, index) => (
+                    <div key={payment.paymentid ?? index} className="adm-activity-item">
+                      <div>
+                        <div style={{ fontWeight: 500, fontSize: 13 }}>{payment.client || 'Client'}</div>
+                        <div className="adm-mono" style={{ marginTop: 2 }}>#{payment.paymentid ?? '—'}</div>
+                      </div>
+                      <div className="adm-activity-meta">
+                        <div>${Number(payment.totalamount || 0).toLocaleString()}</div>
+                        <div style={{ marginTop: 4 }}>
+                          {payment.createdate ? new Date(payment.createdate).toLocaleDateString() : '—'}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </section>
       </div>
     </div>
-  );
+  )
 }
-

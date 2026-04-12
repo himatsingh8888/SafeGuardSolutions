@@ -500,27 +500,7 @@ export default function ClientDashboard() {
         </div>
 
         {/* Similar Clients (Division) */}
-        <div className="cd-section">
-          <div className="cd-section-hd">
-            <span className="cd-section-title">Clients with Matching Service Experience</span>
-          </div>
-          {similarClients.length === 0 ? (
-            <div className="cd-card"><span className="cd-muted">No clients found with the same range of service visit types.</span></div>
-          ) : (
-            <div className="cd-peers">
-              {similarClients.map(c => (
-                <div key={c.clientid} className="cd-peer">
-                  <div className="cd-peer-name">{c.fname} {c.lname}</div>
-                  <div className="cd-tags" style={{ marginTop: 6 }}>
-                    {(c.shared_types || []).map(t => <span key={t} className="cd-tag">{t}</span>)}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>{fmt(c.customertype)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+        
         {/* Reviews */}
         <div className="cd-section">
           <div className="cd-section-hd">

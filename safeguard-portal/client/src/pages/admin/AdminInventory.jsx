@@ -1,237 +1,244 @@
+import './adminShared.css'
 import './AdminInventory.css'
 import React from 'react'
 import { API_BASE } from '../../config/apiBase.js'
 
+function stockBadge(quantity) {
+  if (quantity < 10) return { label: 'Low', className: 'clients-badge low-stock' }
+  if (quantity <= 30) return { label: 'Medium', className: 'clients-badge medium-stock' }
+  return { label: 'In stock', className: 'clients-badge in-stock' }
+}
+
 export default function AdminInventory() {
-    const [inventory, setInventory] = React.useState([])
-    const [showModal, setShowModal] = React.useState(false)
-    const [refresh, setRefresh] = React.useState(0)
-    const [modalMode, setModalMode] = React.useState(null)
-    const [selectedItem, setSelectedItem] = React.useState(null)
+  const [inventory, setInventory] = React.useState([])
+  const [showModal, setShowModal] = React.useState(false)
+  const [refresh, setRefresh] = React.useState(0)
+  const [modalMode, setModalMode] = React.useState(null)
+  const [selectedItem, setSelectedItem] = React.useState(null)
 
-    const inventoryList = inventory.map((item) => {
-        const stockStatus = getStockStatus(item.quantity)
-        return (
-            <div key={item.inventoryid} className='inventory-row'>
-                <h4>{item.itemtype}</h4>
-                <div>
-                    <p>{item.suppliercompany}</p>
-                </div>
-                <div>
-                    <p className='stock-text'>{item.quantity} units</p>
-                    <span className={`stock-badge ${stockStatus.class}`}>{stockStatus.label}</span>
-                </div>
-                <h2 className='purchase-date'>{formatDate(item.dateofpurchase)}</h2>
-                <div className='warranty-cell'>
-                    <p className='warranty-text'>{formatDate(item.warranty)}</p>
-                </div>
-                <div className='action-buttons'>
-                    <button onClick={() => {
-                        setModalMode('edit')
-                        setShowModal(true)
-                        setSelectedItem(item)
-                    }}>Edit</button>
-                    <button onClick={() => { deleteItem(item.inventoryid) }}>Delete</button>
-                </div>
+  React.useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/inventory`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        })
+        const data = await res.json()
+        setInventory(data)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    fetchInventory()
+  }, [refresh])
+
+  function formatDate(dateString) {
+    if (!dateString) return '—'
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  function formatDateForInput(dateString) {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  async function handleFormSubmit(e) {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    const itemType = formData.get('itemType')
+    const supplierCompany = formData.get('supplierCompany')
+    const quantity = formData.get('quantity')
+    const dateOfPurchase = formData.get('dateOfPurchase')
+    const warranty = formData.get('warranty')
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/addInventory`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ itemType, supplierCompany, quantity, dateOfPurchase, warranty }),
+      })
+      if (res.ok) {
+        setRefresh(prev => prev + 1)
+        setShowModal(false)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  async function deleteItem(inventoryid) {
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/deleteInventory`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ inventoryid }),
+      })
+      if (res.ok) setRefresh(prev => prev + 1)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async function updateItem(e) {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    const itemType = formData.get('itemType')
+    const supplierCompany = formData.get('supplierCompany')
+    const quantity = formData.get('quantity')
+    const dateOfPurchase = formData.get('dateOfPurchase')
+    const warranty = formData.get('warranty')
+    const inventoryid = selectedItem.inventoryid
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/updateInventory`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ itemType, supplierCompany, quantity, dateOfPurchase, warranty, inventoryid }),
+      })
+      if (res.ok) {
+        setRefresh(prev => prev + 1)
+        setShowModal(false)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  return (
+    <div className="clients-page">
+      {showModal && (
+        <div className="overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{modalMode === 'edit' ? 'Edit item' : 'Add item'}</h2>
+              <button type="button" className="modal-close" onClick={() => setShowModal(false)} aria-label="Close">×</button>
             </div>
-        )
-    })
-
-    function getStockStatus(quantity) {
-        if (quantity < 10) {
-            return { label: 'Low Stock', class: 'low-stock' }
-        } else if (quantity <= 30) {
-            return { label: 'Medium', class: 'medium-stock' }
-        } else {
-            return { label: 'In Stock', class: 'in-stock' }
-        }
-    }
-
-    function formatDate(dateString) {
-        if (!dateString) return 'N/A'
-        const date = new Date(dateString)
-        const options = { month: 'short', day: 'numeric', year: 'numeric' }
-        return date.toLocaleDateString('en-US', options)
-    }
-
-    function formatDateForInput(dateString) {
-        if (!dateString) return ''
-        const date = new Date(dateString)
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        return `${year}-${month}-${day}`
-    }
-
-    React.useEffect(() => {
-        const fetchInventory = async () => {
-            try {
-                const res = await fetch(`${API_BASE}/api/inventory`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                })
-                const data = await res.json()
-                setInventory(data)
-            } catch (error) {
-                console.error(error)
-            }
-        }
-
-        fetchInventory()
-    }, [refresh])
-
-    async function handleFormSubmit(e) {
-        e.preventDefault()
-        const formData = new FormData(e.target)
-
-        const itemType = formData.get("itemType")
-        const supplierCompany = formData.get("supplierCompany")
-        const quantity = formData.get("quantity")
-        const dateOfPurchase = formData.get("dateOfPurchase")
-        const warranty = formData.get("warranty")
-
-        try {
-            const res = await fetch(`${API_BASE}/api/admin/addInventory`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ itemType, supplierCompany, quantity, dateOfPurchase, warranty })
-            })
-
-            const data = await res.json()
-
-            if (res.ok) {
-                console.log('Item successfully added')
-                setRefresh(prev => prev + 1)
-                setShowModal(false)
-            } else {
-                console.log(data.message)
-            }
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    async function deleteItem(inventoryid) {
-        try {
-            const res = await fetch(`${API_BASE}/api/admin/deleteInventory`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ inventoryid })
-            })
-            const data = await res.json()
-
-            if (res.ok) {
-                console.log(data.message)
-                setRefresh(prev => prev + 1)
-            }
-        } catch (error) {
-            console.log(error)
-        }
-    }
-
-    async function updateItem(e) {
-        e.preventDefault()
-        const formData = new FormData(e.target)
-
-        const itemType = formData.get("itemType")
-        const supplierCompany = formData.get("supplierCompany")
-        const quantity = formData.get("quantity")
-        const dateOfPurchase = formData.get("dateOfPurchase")
-        const warranty = formData.get("warranty")
-        const inventoryid = selectedItem.inventoryid
-
-        try {
-            const res = await fetch(`${API_BASE}/api/admin/updateInventory`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ itemType, supplierCompany, quantity, dateOfPurchase, warranty, inventoryid })
-            })
-            const data = await res.json()
-
-            if (res.ok) {
-                console.log(data.message)
-                setRefresh(prev => prev + 1)
-                setShowModal(false)
-            }
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    return (
-        <div>
-            {showModal &&
-                <div className='overlay'>
-                    <div className='modal'>
-                        <div className='modal-header'>
-                            <h1>{modalMode === 'edit' ? 'Edit Item' : 'Add Item'}</h1>
-                            <button onClick={() => { setShowModal(false) }}>x</button>
-                        </div>
-                        <form onSubmit={modalMode === 'edit' ? updateItem : handleFormSubmit}>
-                            <div className='field-row'>
-                                <div>
-                                    <p className='field-label'>ITEM TYPE</p>
-                                    <input type="text" name="itemType" placeholder="eg. Security Camera" defaultValue={modalMode === 'edit' ? selectedItem?.itemtype : ''} required />
-                                </div>
-                                <div>
-                                    <p className='field-label'>SUPPLIER</p>
-                                    <input type="text" name="supplierCompany" placeholder="eg. TechCorp" defaultValue={modalMode === 'edit' ? selectedItem?.suppliercompany : ''} required />
-                                </div>
-                            </div>
-                            <div className='field-row'>
-                                <div>
-                                    <p className='field-label'>QUANTITY</p>
-                                    <input type="number" name="quantity" placeholder="eg. 20" defaultValue={modalMode === 'edit' ? selectedItem?.quantity : ''} required />
-                                </div>
-                                <div>
-                                    <p className='field-label'>PURCHASE DATE</p>
-                                    <input type="date" name="dateOfPurchase" defaultValue={modalMode === 'edit' ? formatDateForInput(selectedItem?.dateofpurchase) : ''} required />
-                                </div>
-                            </div>
-                            <p className='field-label'>WARRANTY EXPIRY</p>
-                            <input className='full-width-input' type="date" name="warranty" defaultValue={modalMode === 'edit' ? formatDateForInput(selectedItem?.warranty) : ''} />
-                            <div className='modal-footer'>
-                                <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button type="submit">{modalMode === 'edit' ? 'Edit Item' : 'Add Item'}</button>
-                            </div>
-                        </form>
-                    </div>
+            <form onSubmit={modalMode === 'edit' ? updateItem : handleFormSubmit}>
+              <div className="modal-body">
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label">Item type</label>
+                    <input className="form-input" type="text" name="itemType" placeholder="Security camera" defaultValue={modalMode === 'edit' ? selectedItem?.itemtype : ''} required />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Supplier</label>
+                    <input className="form-input" type="text" name="supplierCompany" placeholder="Supplier name" defaultValue={modalMode === 'edit' ? selectedItem?.suppliercompany : ''} required />
+                  </div>
                 </div>
-            }
-            <div className="Admin-Dashboard" style={{ padding: 24 }}>
-
-                <div className="page-header">
-                    <div className='header-title'>
-                        <h2>Inventory</h2>
-                        <p>Manage your equipment and stock</p>
-                    </div>
-                    <button onClick={() => { setShowModal(true); setModalMode('add') }}>+Add Item</button>
+                <div className="form-row">
+                  <div className="form-field">
+                    <label className="form-label">Quantity</label>
+                    <input className="form-input" type="number" name="quantity" min="0" placeholder="20" defaultValue={modalMode === 'edit' ? selectedItem?.quantity : ''} required />
+                  </div>
+                  <div className="form-field">
+                    <label className="form-label">Purchase date</label>
+                    <input className="form-input" type="date" name="dateOfPurchase" defaultValue={modalMode === 'edit' ? formatDateForInput(selectedItem?.dateofpurchase) : ''} required />
+                  </div>
                 </div>
-                <div className='Inventory-Table'>
-                    <div className='Inventory-Header'>
-                        <h4>ITEM</h4>
-                        <h4>SUPPLIER</h4>
-                        <h4>STOCK</h4>
-                        <h4>PURCHASE DATE</h4>
-                        <h4>WARRANTY</h4>
-                        <h4>ACTIONS</h4>
-                    </div>
-                    {inventoryList}
+                <div className="form-field full">
+                  <label className="form-label">Warranty expiry</label>
+                  <input className="form-input" type="date" name="warranty" defaultValue={modalMode === 'edit' ? formatDateForInput(selectedItem?.warranty) : ''} />
                 </div>
-
-            </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="clients-btn-edit" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="submit" className="clients-btn-primary">{modalMode === 'edit' ? 'Save' : 'Add item'}</button>
+              </div>
+            </form>
+          </div>
         </div>
-    );
+      )}
+
+      <div className="clients-main">
+        <div className="clients-page-header">
+          <div>
+            <h1 className="clients-page-title">Inventory</h1>
+            <p className="clients-page-sub">Equipment and stock on hand</p>
+          </div>
+          <button
+            type="button"
+            className="clients-add-btn"
+            onClick={() => { setModalMode('add'); setSelectedItem(null); setShowModal(true); }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Add item
+          </button>
+        </div>
+
+        {inventory.length === 0 ? (
+          <div className="clients-empty">No inventory records yet.</div>
+        ) : (
+          <>
+            <div className="adm-table-scroll">
+              <div className="adm-table-wrap">
+                <table className="adm-table inventory-admin-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Supplier</th>
+                      <th>Stock</th>
+                      <th>Purchased</th>
+                      <th>Warranty</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventory.map(item => {
+                      const st = stockBadge(item.quantity)
+                      return (
+                        <tr key={item.inventoryid}>
+                          <td style={{ fontWeight: 500 }}>{item.itemtype}</td>
+                          <td>{item.suppliercompany}</td>
+                          <td>
+                            <span style={{ marginRight: 8 }}>{item.quantity} units</span>
+                            <span className={st.className}>{st.label}</span>
+                          </td>
+                          <td>{formatDate(item.dateofpurchase)}</td>
+                          <td>{formatDate(item.warranty)}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="clients-btn-edit"
+                              onClick={() => { setModalMode('edit'); setSelectedItem(item); setShowModal(true); }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="clients-btn-delete"
+                              style={{ marginLeft: 6 }}
+                              onClick={() => deleteItem(item.inventoryid)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="clients-footer">{inventory.length} items</div>
+          </>
+        )}
+      </div>
+    </div>
+  )
 }
