@@ -372,32 +372,106 @@ export async function updateInstallationStatus(req, res) {
     const { installationid, status } = req.body
 
     try {
-        let query = 'UPDATE installation SET status = $1';
-        const params = [status];
+        // Schema CHECKs: completeddate >= scheduleddate, and scheduleddate >= CURRENT_DATE.
+        // Plain "completeddate = CURRENT_DATE" breaks when scheduleddate is in the future
+        // (completed before scheduled) or when scheduleddate is in the past (row fails the
+        // scheduleddate check on UPDATE). Use GREATEST so both constraints hold.
+        let query
+        const params = [status]
 
-        // If status is "Completed", set the completeddate to today
         if (status === 'Completed') {
-            query += ', completeddate = CURRENT_DATE';
+            query = `
+                UPDATE public.installation
+                SET status = $1,
+                    scheduleddate = GREATEST(scheduleddate, CURRENT_DATE),
+                    completeddate = GREATEST(CURRENT_DATE, scheduleddate)
+                WHERE installationid = $2
+                RETURNING *
+            `
+        } else {
+            query = `
+                UPDATE public.installation
+                SET status = $1
+                WHERE installationid = $2
+                RETURNING *
+            `
         }
+        params.push(installationid)
 
-        query += ' WHERE installationid = $2 RETURNING *';
-        params.push(installationid);
-
-        const result = await pool.query(query, params);
+        const result = await pool.query(query, params)
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Installation not found' });
+            return res.status(404).json({ message: 'Installation not found' })
         }
 
         res.json({
             message: 'Installation status updated successfully',
-            installation: result.rows[0]
-        });
+            installation: result.rows[0],
+        })
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to update installation status' });
+        console.error(err)
+        res.status(500).json({
+            error: 'Failed to update installation status',
+            detail: err.message,
+        })
     }
 }
 
+export async function getLocations(req, res) {
+    try {
+        const result = await pool.query(`
+            SELECT l.siteid, l.address, l.description, l.client,
+                   c.fname, c.lname
+            FROM public.location l
+            JOIN public.client c ON c.clientid = l.client
+            ORDER BY l.siteid
+        `)
+        res.json(result.rows)
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({ error: 'Failed to fetch locations' })
+    }
+}
 
+export async function addInstallation(req, res) {
+    const { siteid, scheduleddate, internalcost, price, techniciannumbs, description } = req.body
+
+    if (siteid == null || scheduleddate == null || String(scheduleddate).trim() === '') {
+        return res.status(400).json({ message: 'siteid and scheduleddate are required' })
+    }
+
+    const ic = internalcost !== undefined && internalcost !== '' ? Number(internalcost) : 0
+    const pr = price !== undefined && price !== '' ? Number(price) : 0
+    const tn = techniciannumbs !== undefined && techniciannumbs !== '' ? parseInt(String(techniciannumbs), 10) : 1
+
+    if (Number.isNaN(ic) || ic < 0 || Number.isNaN(pr) || pr < 0 || Number.isNaN(tn) || tn < 0) {
+        return res.status(400).json({ message: 'internalcost, price, and techniciannumbs must be valid non-negative numbers' })
+    }
+
+    try {
+        const exists = await pool.query('SELECT 1 FROM public.location WHERE siteid = $1', [siteid])
+        if (exists.rowCount === 0) {
+            return res.status(400).json({ message: 'Invalid site (location) id' })
+        }
+
+        const result = await pool.query(
+            `INSERT INTO public.installation (
+                siteid, scheduleddate, internalcost, price, techniciannumbs, description, status, completeddate
+            ) VALUES ($1, $2::date, $3, $4, $5, $6, 'Scheduled', NULL)
+            RETURNING *`,
+            [siteid, scheduleddate, ic, pr, tn, description || null]
+        )
+
+        res.status(201).json({
+            message: 'Installation created',
+            installation: result.rows[0],
+        })
+    } catch (err) {
+        console.error(err)
+        res.status(500).json({
+            error: 'Failed to create installation',
+            detail: err.message,
+        })
+    }
+}
 

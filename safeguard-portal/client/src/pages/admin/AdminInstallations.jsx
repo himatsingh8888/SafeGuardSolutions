@@ -3,6 +3,7 @@ import './adminShared.css'
 import './AdminInstallations.css'
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../../config/apiBase.js'
+import CreateInstallationModal from './CreateInstallationModal.jsx'
 
 function installationBadgeClass(status) {
   const s = String(status || '').toLowerCase()
@@ -16,12 +17,20 @@ export default function AdminInstallations() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [activeFilter, setActiveFilter] = useState('all')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [locations, setLocations] = useState([])
+  const [locationsLoading, setLocationsLoading] = useState(false)
+  const [createError, setCreateError] = useState(null)
 
   const fetchInstallations = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`${API_BASE}/api/installations`)
+      const response = await fetch(`${API_BASE}/api/admin/getInstallations`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
       if (!response.ok) throw new Error(`Failed to fetch installations: ${response.status}`)
       const data = await response.json()
       setInstallations(data)
@@ -37,6 +46,77 @@ export default function AdminInstallations() {
     fetchInstallations()
   }, [])
 
+  useEffect(() => {
+    if (!showCreateModal) return
+    let cancelled = false
+    async function loadLocations() {
+      setLocationsLoading(true)
+      setCreateError(null)
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/getLocations`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        })
+        const data = await res.json().catch(() => [])
+        if (!res.ok) throw new Error(data.error || data.message || `Failed to load sites (${res.status})`)
+        if (!cancelled) setLocations(Array.isArray(data) ? data : [])
+      } catch (e) {
+        if (!cancelled) setCreateError(e.message)
+      } finally {
+        if (!cancelled) setLocationsLoading(false)
+      }
+    }
+    loadLocations()
+    return () => {
+      cancelled = true
+    }
+  }, [showCreateModal])
+
+  const todayMin = new Date().toISOString().split('T')[0]
+
+  async function handleCreateInstallation(e) {
+    e.preventDefault()
+    setCreateError(null)
+    const form = e.target
+    const siteid = Number(form.siteid.value)
+    if (!form.siteid.value || Number.isNaN(siteid) || siteid <= 0) {
+      setCreateError('Please select a site')
+      return
+    }
+    const scheduleddate = form.scheduleddate.value
+    const internalcost = form.internalcost.value
+    const price = form.price.value
+    const techniciannumbs = form.techniciannumbs.value
+    const description = form.description.value.trim()
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/addInstallation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          siteid,
+          scheduleddate,
+          internalcost,
+          price,
+          techniciannumbs,
+          description: description || null,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || data.message || `Create failed (${res.status})`)
+      }
+      setShowCreateModal(false)
+      await fetchInstallations()
+    } catch (err) {
+      setCreateError(err.message)
+    }
+  }
+
   const updateInstallationStatus = async (installationId, newStatus) => {
     try {
       const response = await fetch(`${API_BASE}/api/admin/updateInstallationStatus`, {
@@ -47,7 +127,10 @@ export default function AdminInstallations() {
         },
         body: JSON.stringify({ installationid: installationId, status: newStatus }),
       })
-      if (!response.ok) throw new Error(`Failed to update status: ${response.status}`)
+      const errBody = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(errBody.detail || errBody.error || errBody.message || `Failed to update status: ${response.status}`)
+      }
       setInstallations(installations.map(installation =>
         installation.installationid === installationId
           ? {
@@ -103,28 +186,37 @@ export default function AdminInstallations() {
     )
   }
 
-  if (installations.length === 0) {
-    return shell(
-      <>
-        <div className="clients-page-header">
-          <div>
-            <h1 className="clients-page-title">Installations</h1>
-            <p className="clients-page-sub">Scheduled and completed installation jobs</p>
-          </div>
-        </div>
-        <div className="clients-empty">No installations on file.</div>
-      </>
-    )
-  }
-
   return (
     <div className="clients-page">
       <div className="clients-main">
+        <CreateInstallationModal
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          locations={locations}
+          locationsLoading={locationsLoading}
+          createError={createError}
+          todayMin={todayMin}
+          onSubmit={handleCreateInstallation}
+        />
+
         <div className="clients-page-header">
           <div>
             <h1 className="clients-page-title">Installations</h1>
             <p className="clients-page-sub">View and update job status</p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setCreateError(null)
+              setShowCreateModal(true)
+            }}
+            className="clients-add-btn"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Create installation
+          </button>
         </div>
 
         <div className="clients-summary-strip">
@@ -181,34 +273,42 @@ export default function AdminInstallations() {
                 </tr>
               </thead>
               <tbody>
-                {filteredInstallations.map(installation => (
-                  <tr key={installation.installationid}>
-                    <td className="adm-mono">{installation.installationid}</td>
-                    <td className="adm-mono">{installation.siteid}</td>
-                    <td>{formatDate(installation.scheduleddate)}</td>
-                    <td>{installation.description || '—'}</td>
-                    <td>{installation.techniciannumbs ?? '—'}</td>
-                    <td>{formatCurrency(installation.price)}</td>
-                    <td>
-                      <span className={installationBadgeClass(installation.status)}>
-                        {installation.status}
-                      </span>
-                    </td>
-                    <td>
-                      {installation.status === 'Scheduled' ? (
-                        <button
-                          type="button"
-                          className="adm-btn-action"
-                          onClick={() => updateInstallationStatus(installation.installationid, 'Completed')}
-                        >
-                          Mark complete
-                        </button>
-                      ) : (
-                        <span className="adm-muted-inline">Done {formatDate(installation.completeddate)}</span>
-                      )}
+                {filteredInstallations.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="clients-empty" style={{ padding: '24px 16px' }}>
+                      No installations on file.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredInstallations.map(installation => (
+                    <tr key={installation.installationid}>
+                      <td className="adm-mono">{installation.installationid}</td>
+                      <td className="adm-mono">{installation.siteid}</td>
+                      <td>{formatDate(installation.scheduleddate)}</td>
+                      <td>{installation.description || '—'}</td>
+                      <td>{installation.techniciannumbs ?? '—'}</td>
+                      <td>{formatCurrency(installation.price)}</td>
+                      <td>
+                        <span className={installationBadgeClass(installation.status)}>
+                          {installation.status}
+                        </span>
+                      </td>
+                      <td>
+                        {installation.status === 'Scheduled' ? (
+                          <button
+                            type="button"
+                            className="adm-btn-action"
+                            onClick={() => updateInstallationStatus(installation.installationid, 'Completed')}
+                          >
+                            Mark complete
+                          </button>
+                        ) : (
+                          <span className="adm-muted-inline">Done {formatDate(installation.completeddate)}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
