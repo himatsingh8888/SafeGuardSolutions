@@ -82,9 +82,6 @@ export default function Home() {
             <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
             <a href="#services" onClick={() => setMenuOpen(false)}>Services</a>
             <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
-            <Link to="/client/login" onClick={() => setMenuOpen(false)}>Client Portal</Link>
-            <Link to="/employee/login" className="nav-link-pill" onClick={() => setMenuOpen(false)}>Employee Portal</Link>
-            <Link to="/login" className="nav-link-pill nav-link-pill-dark" onClick={() => setMenuOpen(false)}>Admin</Link>
           </div>
         </div>
       </nav>

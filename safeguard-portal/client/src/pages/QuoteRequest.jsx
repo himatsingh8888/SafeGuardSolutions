@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./QuoteRequest.css";
 
+// Create a form at https://formspree.io (sign up with gurjotsafeguardsolutions@gmail.com)
+// and replace this with your form's endpoint, e.g. "https://formspree.io/f/abcdwxyz".
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mwvdegzl";
+
 export default function QuoteRequest() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -53,11 +57,12 @@ export default function QuoteRequest() {
     
     if (Object.keys(validationErrors).length === 0) {
       setIsSubmitting(true);
-      
-      fetch("http://localhost:5001/api/quote-request", {
+
+      fetch(FORMSPREE_ENDPOINT, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          Accept: "application/json"
         },
         body: JSON.stringify(formData)
       })
