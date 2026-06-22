@@ -266,7 +266,7 @@ export default function Home() {
         </div>
         <div className="footer-contact">
           <p>Phone: (236) 808-4666</p>
-          <p>Email: info@safeGuardsolutions.ca</p>
+          <p>Email: gurjotsafeguardsolutions@gmail.com</p>
         </div>
         <div className="footer-social">
           <a href="https://www.instagram.com/_safeguardsolutions/?hl=en" target="_blank" rel="noopener noreferrer">Instagram</a>

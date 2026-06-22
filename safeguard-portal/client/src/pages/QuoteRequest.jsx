@@ -243,7 +243,7 @@ export default function QuoteRequest() {
             We'll contact you within 1-2 business days.
           </p>
           <p className="contact-info">
-            Need immediate assistance? Call us at <strong>(236) 808-4666</strong> or email <strong>info@safeguardsolutions.ca</strong>
+            Need immediate assistance? Call us at <strong>(236) 808-4666</strong> or email <strong>gurjotsafeguardsolutions@gmail.com</strong>
           </p>
         </div>
       </div>
